@@ -20,21 +20,6 @@ struct Property {
 
 // MARK: - Utilities
 
-extension String {
-    
-    /// Converts this string into a JSON dictionary via JSONSerialization.
-    func jsonDictionary() throws -> [String:Any] {
-        let jsonData = data(using: .utf8)!
-        
-        let jsonObject = try JSONSerialization.jsonObject(with: jsonData, options: [])
-        guard let dictionary = jsonObject as? [String:Any] else {
-            throw Garage.makeError("json format was not a dictionary: \(self)")
-        }
-        
-        return dictionary
-    }
-}
-
 extension Dictionary where Key == String, Value == Any {
     
     /// Returns whether this dictionary is tagged as an anonymous object

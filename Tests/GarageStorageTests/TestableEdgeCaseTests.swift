@@ -19,14 +19,7 @@ class TestableEdgeCaseTests: XCTestCase {
         let garage = Garage()
         garage.deleteAllObjects()
     }
-    
-    // Test for ObjectMapper's String extension error
-    
-    func testBadJSONStringAsDictionary() {
-        let noDictionary = "[\"hello\"]"
-        XCTAssertThrowsError(try noDictionary.jsonDictionary(), "Should fail in dictionary conversion")
-    }
-    
+         
     func testBadTransformable() {
         let dictionary = [CoreDataObject.Attribute.type: Property.transformableType,
                           Property.transformableType: "Hello"]

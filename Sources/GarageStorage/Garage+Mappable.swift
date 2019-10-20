@@ -37,11 +37,6 @@ public extension KeyedEncodingContainer {
         let reference = mappable.id
         try encode(reference, forKey: key)
     }
-    
-    // Wrap the default implementation so we can call it from our Mappable version.
-    mutating func encodeIfPresentDefault<T: Encodable>(_ codable: T, forKey key: KeyedEncodingContainer<K>.Key) throws {
-        try encodeIfPresent(codable, forKey: key)
-    }
 
     mutating func encodeIfPresent<T: Mappable>(_ mappable: T?, forKey key: KeyedEncodingContainer<K>.Key) throws {
         guard let mappable = mappable else { return }
