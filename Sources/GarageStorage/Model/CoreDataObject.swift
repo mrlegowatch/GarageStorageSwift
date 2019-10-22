@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 
 @objc(GSCoreDataObject)
-public class CoreDataObject: NSManagedObject {
+internal class CoreDataObject: NSManagedObject {
     
     // Stringified entity name
     static let entityName = "GSCoreDataObject"
