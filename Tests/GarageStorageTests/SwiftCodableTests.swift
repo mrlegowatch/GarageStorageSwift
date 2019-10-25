@@ -310,40 +310,6 @@ class SwiftCodableTests: XCTestCase {
             XCTAssertEqual(sam?.birthdate.timeIntervalSinceReferenceDate ?? 0, -1609441200.0, "Reconstituted date failed")
         }
     }
-
-    func testCustomEncryptor() {
-        let storeName = "CustomEncryptorGarage.sqlite"
-        let description = Garage.makePersistentStoreDescription(storeName)
-#if os(iOS)
-        description.setOption(FileProtectionType.complete as NSObject, forKey: NSPersistentStoreFileProtectionKey)
-#endif
-        let encryptor = CustomDataEncryptor()
-        let garage = Garage(with: [description])
-        garage.dataEncryptionDelegate = encryptor
-
-        garage.loadPersistentStores { (description, error) in
-            XCTAssertNil(error, "Should not have thrown an error")
-        }
-        
-        // Create a "Sam" person and park it.
-        do {
-            let sam = swiftPerson()
-            XCTAssertNoThrow(try garage.park(sam), "parkObject")
-        }
-        
-        // Retrieve the "Sam" person.
-        do {
-            let sam = try? garage.retrieve(SwiftPerson.self, identifier: "Sam")
-            XCTAssertNotNil(sam, "Failed to retrieve 'Sam' from garage store")
-            XCTAssertEqual(sam?.importantDates.count ?? 0, 3, "expected 3 important dates")
-            
-            // Confirm that Sam's address (an embedded Codable) survived the round-trip
-            // We can use Equatable here, even though they're "different" (waves hands) "objects"
-            // because we didn't try to change one of their values.
-            let address = sam?.address
-            XCTAssertEqual(address ?? nil, swiftAddress(), "Should have restored address")
-        }
-    }
     
     func testMappables() {
         let garage = Garage()

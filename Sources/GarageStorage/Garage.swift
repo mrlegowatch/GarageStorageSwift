@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 
 /// If your application requires data encryption, this protocol provides the relevant hooks.
-@objc(GSDataEncryptable)
+@objc(GSDataEncryptionDelegate)
 public protocol DataEncryptionDelegate: NSObjectProtocol {
     
     /// This is called when the Core Data object's underlying data is about to be stored. Provide an implementation that encrypts to a string.
