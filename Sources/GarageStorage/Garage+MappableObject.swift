@@ -291,9 +291,7 @@ extension Garage {
         let type = mapping.classNameForMapping
         let identifier = try coreDataIdentifier(for: object, attribute: mapping.identifyingAttribute)
         
-        let coreDataObject = fetchObject(for: type, identifier: identifier)
-        
-        return coreDataObject ?? makeCoreDataObject(type, identifier: identifier, version: mapping.version)
+        return retrieveCoreDataObject(for: type, identifier: identifier)
     }
 
     /// Add an object to the Garage. Parking an object without an identifier set will go into the Garage as unidentified.
@@ -333,6 +331,7 @@ extension Garage {
     
     private func retrieveMappableObject(_ objectClass: AnyClass, identifier: String) throws -> MappableObject {
         let className = NSStringFromClass(objectClass)
+        
         guard let coreDataObject = fetchObject(for: className, identifier: identifier) else {
             throw Garage.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
         }

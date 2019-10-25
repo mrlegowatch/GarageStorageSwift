@@ -119,22 +119,6 @@ class TestableEdgeCaseTests: XCTestCase {
          */
     }
     
-    func testNotSyncable() {
-        let garage = Garage()
-        
-        do {
-            let address = swiftAddress()
-            
-            try garage.park(address)
-            
-            let syncStatus = try garage.syncStatus(for: address)
-            XCTAssertEqual(syncStatus, .undetermined, "Sync status undetermined")
-        }
-        catch {
-            XCTFail("No exception should have been thrown")
-        }
-    }
-    
     func testInvalidStoreGarage() {
         let invalidStoreName = "Wazzup/OtherGarage.sqlite"
         let description = Garage.makePersistentStoreDescription(invalidStoreName)
@@ -176,7 +160,8 @@ class TestableEdgeCaseTests: XCTestCase {
         description.setOption(FileProtectionType.complete as NSObject, forKey: NSPersistentStoreFileProtectionKey)
 #endif
         let encryptor = CustomDataEncryptor()
-        let garage = Garage(with: [description], dataEncryptor: encryptor)
+        let garage = Garage(with: [description])
+        garage.dataEncryptionDelegate = encryptor
         garage.loadPersistentStores { (description, error) in
             XCTAssertNil(error, "Should not have thrown an error")
         }

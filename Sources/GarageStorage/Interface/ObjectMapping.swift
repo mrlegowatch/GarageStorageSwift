@@ -15,7 +15,6 @@ public class ObjectMapping: NSObject {
     
     internal let classNameForMapping: String
     internal private(set) var mappings = [String:String]()
-    internal let version: Int = 0
     
     private var _identifyingAttribute: String?
     

@@ -269,16 +269,6 @@ class SwiftCodableTests: XCTestCase {
             XCTAssertNoThrow(try garage.setSyncStatus(.undetermined, for: [nick, sam]), "setSyncStatus")
             XCTAssertEqual(try garage.syncStatus(for: nick), .undetermined, "Nick should have undetermined sync status")
         }
-        
-        // Test retrieving objects with sync status of a particular class
-        // Note: using an NSKeyedUnarchiver may throw an uncaught exception, because its exception class is different than NSError.
-        do {
-            let _: [SwiftAddress] = try garage.retrieveAll(withStatus: .undetermined)
-            XCTFail("retrieveObjects should have thrown an error because SwiftAddress does not conform to Syncable")
-        }
-        catch {
-            // expected to throw
-        }
     }
     
     func testInvalidSyncStatus() {
@@ -328,7 +318,9 @@ class SwiftCodableTests: XCTestCase {
         description.setOption(FileProtectionType.complete as NSObject, forKey: NSPersistentStoreFileProtectionKey)
 #endif
         let encryptor = CustomDataEncryptor()
-        let garage = Garage(with: [description], dataEncryptor: encryptor)
+        let garage = Garage(with: [description])
+        garage.dataEncryptionDelegate = encryptor
+
         garage.loadPersistentStores { (description, error) in
             XCTAssertNil(error, "Should not have thrown an error")
         }

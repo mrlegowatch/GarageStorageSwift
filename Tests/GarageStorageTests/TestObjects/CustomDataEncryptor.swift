@@ -10,7 +10,7 @@ import Foundation
 import GarageStorage
 
 // Sample custom string encryptor: just reverses the characters, tee hee.
-class CustomDataEncryptor: NSObject, DataEncryptable {
+class CustomDataEncryptor: NSObject, DataEncryptionDelegate {
  
     func encrypt(_ data: Data) throws -> String {
         let string = data.base64EncodedString(options: [])

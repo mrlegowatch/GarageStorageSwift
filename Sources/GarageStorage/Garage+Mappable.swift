@@ -72,7 +72,7 @@ extension Decoder {
 public extension KeyedDecodingContainer {
     
     // Wrap the default implementation so we can call it from our Mappable version.
-    private func decodeDefault<T: Codable>(_ codable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T {
+    private func decodeDefault<T: Decodable>(_ codable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T {
         return try decode(T.self, forKey: key)
     }
 
@@ -91,7 +91,7 @@ public extension KeyedDecodingContainer {
     }
     
     // Wrap the default implementation so we can call it from our Mappable version.
-    private func decodeIfPresentDefault<T: Codable>(_ codable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T? {
+    private func decodeIfPresentDefault<T: Decodable>(_ codable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T? {
         return try decodeIfPresent(T.self, forKey: key)
     }
     

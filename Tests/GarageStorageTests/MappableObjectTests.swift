@@ -344,7 +344,8 @@ class MappableObjectTests: XCTestCase {
         description.setOption(FileProtectionType.complete as NSObject, forKey: NSPersistentStoreFileProtectionKey)
 #endif
         let encryptor = CustomDataEncryptor()
-        let garage = Garage(with: [description], dataEncryptor: encryptor)
+        let garage = Garage(with: [description])
+        garage.dataEncryptionDelegate = encryptor
         garage.loadPersistentStores { (description, error) in
             XCTAssertNil(error, "Should not have thrown an error")
         }

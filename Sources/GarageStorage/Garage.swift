@@ -11,7 +11,7 @@ import CoreData
 
 /// If your application requires data encryption, this protocol provides the relevant hooks.
 @objc(GSDataEncryptable)
-public protocol DataEncryptable: NSObjectProtocol {
+public protocol DataEncryptionDelegate: NSObjectProtocol {
     
     /// This is called when the Core Data object's underlying data is about to be stored. Provide an implementation that encrypts to a string.
     @objc func encrypt(_ data: Data) throws -> String
@@ -29,7 +29,9 @@ public class Garage: NSObject {
     
     private let persistentContainer: PersistentContainer
 
-    private weak var dataEncryptor: DataEncryptable?
+    /// An optional delegate for serializing/deserializing stored data.
+    @objc
+    public weak var dataEncryptionDelegate: DataEncryptionDelegate?
 
     /// Since GarageStorage is backed by Core Data, changes to the managed object context are not automatically saved to disk. Therefore, after each parkObject/setSyncStatus/deleteObject, `save()` must be called in order to persist those changes. However, when `isAutosaveEnabled` is set to true, the garage will be saved after any operation that causes a change to the MOC. When false, save calls must be performed manually. This is set to true by default.
     @objc(autosaveEnabled)
@@ -68,7 +70,7 @@ public class Garage: NSObject {
     /// Creates a Garage with a default peristent store coordinator and object mapper.
     /// This convenience initalizer will also load the persistent store.
     public convenience override init() {
-        self.init(with: nil, dataEncryptor: nil)
+        self.init(with: nil)
         
         loadPersistentStores { (description, error) in
             if let error = error {
@@ -82,13 +84,11 @@ public class Garage: NSObject {
     /// - note: Once the Garage has been initialized, you need to execute `loadPersistentStores(completionHandler:)` to instruct the Garage to load the persistent stores and complete the creation of the Core Data stack.
     ///
     /// - parameter persistentStoreDescriptions: An array of PersistentStoreDescription to use in the Garage's Core Data Stack. If nil is passed in, a default description will be used.
-    /// - parameter dataEncryptor: Used for optionally serializing/deserializing stored data. If nil is passed in, no encryption is applied.
-    public init(with persistentStoreDescriptions: [PersistentStoreDescription]? = nil,dataEncryptor: DataEncryptable? = nil) {
+    public init(with persistentStoreDescriptions: [PersistentStoreDescription]? = nil) {
         let garageModel = GarageModel()
         self.persistentContainer = PersistentContainer(name: Garage.modelName, managedObjectModel: garageModel)
         let descriptions = persistentStoreDescriptions ?? [Garage.defaultDescription]
         self.persistentContainer.persistentStoreDescriptions = descriptions
-        self.dataEncryptor = dataEncryptor
         super.init()
     }
  
@@ -126,26 +126,29 @@ public class Garage: NSObject {
     }
 
     internal func encrypt(_ data: Data) throws -> String {
-        return try dataEncryptor?.encrypt(data) ?? String(data: data, encoding: .utf8)!
+        return try dataEncryptionDelegate?.encrypt(data) ?? String(data: data, encoding: .utf8)!
     }
     
     internal func decrypt(_ string: String) throws -> Data {
-        return try dataEncryptor?.decrypt(string) ?? string.data(using: .utf8)!
+        return try dataEncryptionDelegate?.decrypt(string) ?? string.data(using: .utf8)!
     }
 
     // MARK: - Parking
     
-    internal func makeCoreDataObject(_ type: String, identifier: String, version: Int) -> CoreDataObject {
+    internal func makeCoreDataObject(_ type: String, identifier: String) -> CoreDataObject {
          let newObject = NSEntityDescription.insertNewObject(forEntityName: CoreDataObject.entityName, into: persistentContainer.viewContext) as! CoreDataObject
          
          newObject.gs_type = type
          newObject.gs_identifier = identifier
          newObject.gs_creationDate = Date()
-         newObject.gs_version = NSNumber(value: version)
          
          return newObject
      }
 
+    internal func retrieveCoreDataObject(for type: String, identifier: String) -> CoreDataObject {
+        return fetchObject(for: type, identifier: identifier) ?? makeCoreDataObject(type, identifier: identifier)
+    }
+    
     // MARK: - Retrieving
     
     internal func fetchObjects(for type: String, identifier: String?) -> [CoreDataObject] {
@@ -160,6 +163,13 @@ public class Garage: NSObject {
         let fetchedObjects = fetchObjects(for: type, identifier: identifier)
         
         return fetchedObjects.count > 0 ? fetchedObjects[0] : nil
+    }
+    
+    internal func fetchCoreDataObject(for type: String, identifier: String) throws -> CoreDataObject {
+        guard let coreDataObject = fetchObject(for: type, identifier: identifier) else {
+            throw Garage.makeError("failed to retrieve object of class: \(type) identifier: \(identifier)")
+        }
+        return coreDataObject
     }
 
     internal func fetchObjects(with syncStatus: SyncStatus, type: String?) throws -> [CoreDataObject] {
