@@ -38,7 +38,7 @@ internal class PersistentContainer {
     
     internal init(name: String, managedObjectModel: NSManagedObjectModel) {
         self.persistentStoreCoordinator = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
-        self.viewContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
+        self.viewContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
         self.viewContext.persistentStoreCoordinator = self.persistentStoreCoordinator
     }
     
