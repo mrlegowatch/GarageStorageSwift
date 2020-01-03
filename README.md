@@ -1,13 +1,13 @@
 # GarageStorage
 
 GarageStorage is designed to do two things:
-- Simplify Core Data persistance to store any kind of object
-- Eliminate versioning Core Data datamodels, or having to do xcdatamodel migrations
+- Simplify Core Data persistence, to store any kind of object
+- Eliminate versioning Core Data data models, or the need to do xcdatamodel migrations
 
-It does this at the expense of speed and robustness. In GarageStorage, there is only one type of Core Data Entity, and each referenced object is mapped to an instance of this object. References between objects are maintained, so you do get *some* of the graph features of Core Data. This library is used in production apps, and has unit tests.
+It does this at the expense of speed and robustness. In GarageStorage, there is only one type of Core Data Entity, and each referenced object is mapped to an instance of this object. References between objects are maintained, so you do get *some* of the graph features of Core Data. This library has been used in production apps, and has substantial unit tests, so although it is not especially robust, it is *robust-ish*.
 
 #### What is a Garage?
-The `Garage` is the main object that coordinates activity in Garage Storage. It's called a Garage because you can park pretty much anything in it, like, you know, your garage. The Garage handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the Garage, and *retrieve* them later. Any object going into or coming out of the Garage must conform to the `Codable` protocol, and either the `Hashable` or  `Mappable` protocol. For Objective-C compatibility, the `MappableObject` protocol may be used instead. We'll get into the details on that later. For now, it's important to draw a distinction between how Garage Storage functions and how Core Data functions: Garage Storage stores a JSON representation of your objects in Core Data, as opposed to storing the objects themselves, as Core Data does. There are some implications to this (explained below), but the best part is that you can add whatever type of object you like to the Garage, whenever you like. You don't have to migrate data models or anything, just park what you want!
+The `Garage` is the main object that coordinates activity in Garage Storage. It's called a Garage because you can park pretty much anything in it, like, you know, your garage. The Garage handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the Garage, and *retrieve* them later. Any object going into or coming out of the Garage must conform to the `Codable` protocol, and either the `Hashable` or  `Mappable` protocol. For Objective-C compatibility, the `MappableObject` protocol may be used instead. We'll get into the details on that later. For now, it's important to draw a distinction between how Garage Storage operates and how Core Data operates: Garage Storage stores a JSON representation of your objects in Core Data, as opposed to storing the objects themselves, as Core Data does. There are some implications to this (explained below), but the best part is that you can add whatever type of object you like to the Garage, whenever you like. You don't have to migrate data models or anything, just park whatever you want!
 
 #### Getting Started
 First, create a Garage:
@@ -15,12 +15,12 @@ First, create a Garage:
 ```swift
 let garage = Garage()
 ```
-If you wish to specify the name of the store, have multiple Garage stores, or add configuration options to your persistent store, you may alternatively create a garage with a `PersistentStoreDescription`. A convenience class method `makePeristentStoreDescription(_)` with a store name can be used to make this as simple as possible. 
+If you wish to specify the name of the store, have multiple Garage stores, or add configuration options to your persistent store, you may alternatively create a garage with a `PersistentStoreDescription`. A convenience class method `makePeristentStoreDescription(_)` with a store name can be used to keep this step as simple as possible. 
 
 **Note**: When this library requires iOS 10 or later, this will be replaced with `NSPersistentStoreDescription`.
 
 #### Objects in Swift
-Any Swift type that is involved in being parked in a Garage must conform to `Codable`. The Swift compiler will take care of synthesizing of `CodingKeys`, `init(from:)` and `encode(to:)` methods, or alternatively, you can specify them manually.
+Any Swift type that is involved in being parked in a Garage must conform to `Codable`. The Swift compiler will take care of synthesizing of `CodingKeys`, `init(from:)` and `encode(to:)` methods, or alternatively, you can specify them manually, as you might for any `Codable` type.
 
 For example, given a simple struct:
 ```swift
@@ -30,11 +30,11 @@ struct Address {
     var zip: String
 }
 ```
-In order to store this as a property of another object in GarageStorage, it must conform to Codable:
+In order to store this as a property of another object in GarageStorage, have it to Codable:
 ```swift
 extension Address: Codable { }
 ```
-In order to *park* this as a root type, it must further conform to either the `Hashable`, or  `Mappable` protocol. Since this is a simple type,  `Hashable` is the way to go:
+In order to *park* this as a root type, have it conform to either the `Hashable`, or  `Mappable` protocol. Since this is a simple type,  `Hashable` is the way to go:
 ```swift
 extension Address: Hashable { }
 ```
@@ -74,7 +74,7 @@ static var objectMapping: ObjectMapping {
     return mapping
 }
 ```
-Once you have set the properties to map, you should set the identifying attribute, if it is a top-level object (See note about Identifying Attributes below). This property represents a unique identifier for your object, and it must be a String. For example, in the `objectMapping` method, add this before the return statement:
+Once you have set the properties to map, you should set the identifying attribute, if it is a top-level object (See note about *Identifying Attributes* below). This property represents a unique identifier for your object, and it must be a String. For example, in the `objectMapping` method, add this before the return statement:
 
 ```swift 
     mapping.identifyingAttribute = "ssn"
@@ -90,7 +90,7 @@ You may also park an array of objects in the garage (assuming all are `Mappable`
 ```swift
     try garage.parkAll([myBrother, mySister, myMom, myDad])
 ```
-**For Objective-C**: The `MappableObject` method names are `parkObject(_)` and `parkAllObjects(_)`.
+**For Objective-C**: The `MappableObject` equivalent method names are `parkObject(_)` and `parkAllObjects(_)`.
 
 #### Retrieving Objects
 To retrieve a specific object from the garage, you must specify its `class` and its `identifier`.
@@ -102,7 +102,7 @@ You can also retrieve all objects for a given class:
     let allPeople = try garage.retrieveAll(Person.self)
 ```
 
-**For Objective-C**: The `MappableObject` method names are `retrieveObject(_:identifier:)` and `retrieveAllObjects(_)`.
+**For Objective-C**: The `MappableObject` equivalent method names are `retrieveObject(_:identifier:)` and `retrieveAllObjects(_)`.
 
 #### Deleting Objects
 To delete an object from the Garage, you must specify the mappable object that was originally parked:
@@ -118,7 +118,7 @@ You can also delete all the objects from the Garage:
     garage.deleteAllObjects()
 ```
 
-**For Objective-C**: the `MappableObject` method names are `deleteObject(_)` and `deleteAllObjects(_)`.
+**For Objective-C**: the `MappableObject` equivalent method names are `deleteObject(_)` and `deleteAllObjects(_)`.
 
 #### Sync Status
 If you want to track the sync status of an object (with respect to say, a web service), you can implement the `Syncable` protocol, which requires that your object has a sync status property:
@@ -153,7 +153,7 @@ And most importantly, you can retrieve objects from the garage based on sync sta
 **For Objective-C**: the `MappableObject` method name is `retrieveObjects(withStatus:)`.
 
 #### Saving The Store
-Parking, deleting, or modifying the sync status of objects does not, in and of themselves, persist their changes to disk. However, `isAutosaveEnabled` is set to `true` by default in a `Garage`. This means that any operation that modifies the garage will also trigger a save of the garage. If you don't want this enabled, then set `isAutosaveEnabled` to `false`, and then explicitly save the Garage by calling:
+Parking, deleting, or modifying the sync status of objects may not, in and of themselves, persist their changes to disk. However, `isAutosaveEnabled` is set to `true` by default in a `Garage`. This means that any operation that modifies the garage will also trigger a save of the garage. If you don't want this enabled, then set `isAutosaveEnabled` to `false`, and then explicitly save the Garage by calling:
 ```swift
     garage.save()
 ```
