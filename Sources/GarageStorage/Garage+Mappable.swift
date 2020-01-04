@@ -3,7 +3,7 @@
 //  GarageStorage
 //
 //  Created by Brian Arnold on 10/7/19.
-//  Copyright © 2019 Wellframe. All rights reserved.
+//  Copyright © 2015-2020 Wellframe. All rights reserved.
 //
 
 import Foundation

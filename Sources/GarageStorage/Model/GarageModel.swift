@@ -1,8 +1,9 @@
 //
 //  GarageModel.swift
-//  
+//  GarageStorage
 //
 //  Created by Brian Arnold on 10/18/19.
+//  Copyright © 2015-2020 Wellframe. All rights reserved.
 //
 
 import CoreData
