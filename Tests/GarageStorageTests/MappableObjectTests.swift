@@ -321,10 +321,10 @@ class MappableObjectTests: XCTestCase {
             dateComponents.day = 1
             dateComponents.month = 1
             dateComponents.year = 1950
-            
+            dateComponents.timeZone = TimeZone(abbreviation: "UTC")
             let calendar = Calendar.current
             sam.birthdate = calendar.date(from: dateComponents)!
-            XCTAssertEqual(sam.birthdate.timeIntervalSinceReferenceDate, -1609441200.0, "Making assumption about the test")
+            XCTAssertEqual(sam.birthdate.timeIntervalSinceReferenceDate, -1609459200.0, "Validating assumption about the test in UTC time")
             
             XCTAssertNoThrow(try garage.parkObject(sam), "parkObject")
         }
@@ -333,7 +333,7 @@ class MappableObjectTests: XCTestCase {
             let sam = try? garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
             XCTAssertNotNil(sam, "Failed to retrieve 'Sam' from garage store")
 
-            XCTAssertEqual(sam?.birthdate.timeIntervalSinceReferenceDate ?? 0, -1609441200.0, "Reconstituted date failed")
+            XCTAssertEqual(sam?.birthdate.timeIntervalSinceReferenceDate ?? 0, -1609459200.0, "Reconstituted date failed")
         }
     }
 }
