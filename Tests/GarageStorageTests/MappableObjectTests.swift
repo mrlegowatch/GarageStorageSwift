@@ -82,6 +82,30 @@ class MappableObjectTests: XCTestCase {
         }
     }
     
+    func testMissingReferencedObject() {
+        let garage = Garage()
+
+        // Create a "Sam" person and park it.
+        do {
+            let sam = objCPerson()
+            XCTAssertNoThrow(try garage.parkObject(sam), "parkObject")
+        }
+        
+        // Retrieve Nick and remove him
+        do {
+            let nick = try? garage.retrieveObject(ObjCPerson.self, identifier: "Nick")
+            XCTAssertNotNil(nick, "Failed to retrieve 'Nick' from garage store")
+            
+            XCTAssertNoThrow(try garage.deleteObject(nick!))
+        }
+        
+        // Now try to retrieve Sam. This should fail because Sam references Nick, and Nick has been removed from storage.
+        do {
+            let sam = try? garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
+            XCTAssertNil(sam, "Should not have been able to retrieve 'Sam' from garage store")
+        }
+    }
+    
     func testNilObject() {
         // This tests the Objective-C interface to parkObject, which throws in Swift.
         let garage = Garage()
