@@ -198,4 +198,8 @@ See see details in [Migrating to Swift](MigratingToSwift.md).
 
 ### Conclusion
 
-There's more that the Garage can do, including the ability to use your own `DataEncryptable` (which is useful for encryption purposes), so poke around for more info. Feature/Pull requests are always welcome. Have fun!
+There's more that the Garage can do, including the ability to use your own `DataEncryptionDelegate` (which you can specify for encrypting your data), so poke around for more . Feature/Pull requests are always welcome. Have fun!
+
+### Credits
+
+This library is derived from the [Objective-C version of GarageStorage by Sam Voigt]( https://github.com/samvoigt/GarageStorage), and this library's Objective-C APIs are mostly compatible with that version.
