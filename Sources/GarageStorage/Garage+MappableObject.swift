@@ -196,7 +196,9 @@ extension Garage {
         let type = dictionary[CoreDataObject.Attribute.type] as! String
         let identifier = dictionary[CoreDataObject.Attribute.identifier] as! String
         
-        let referencedObject = fetchObject(for: type, identifier: identifier)!
+        guard let referencedObject = fetchObject(for: type, identifier: identifier) else {
+            throw Garage.makeError("Failed to fetch referenced object for type: \(type) identifier: \(identifier)")
+        }
         return try makeMappableObject(from: referencedObject)
     }
     
