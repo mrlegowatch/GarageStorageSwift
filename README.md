@@ -163,7 +163,7 @@ Parking, deleting, or modifying the sync status of objects may not, in and of th
     garage.save()
 ```
 
-##### A Note about Identifying Objects
+#### A Note about Identifying Objects
 It's worth going into a bit of detail about how *identifying* objects work so you can best leverage (read: account for the quirks of) Garage Storage. Any object with an identifying attribute will be stored as its own separate object in the Garage, and each *reference* will point back to that object. This is great if you have a bunch of objects that reference each other, as the graph is properly maintained in the garage, so a change to one object will be "seen" by the other objects pointing to it. This also enables you to *retrieve* any top-level object by its identifier.
 
 Alternatively, you don't have to set an identifying attribute on your object. If you do this on a top level object (i.e. one that you call `park()` on directly), the `hashValue` (or in the case of Objective-C, the MappableObject's JSON representation of the object) is used as its identifier. If you park unidentified *Object A*, then change one of its properties, and park *Object A* again, you'll now have *two copies* of *Object A* in the Garage, as its JSON mapping, and hence identifier, would have changed. If *Object A* had had an identifier, then *Object A* would have just been updated when it was parked the second time. It's considered best practice for top-level objects to have an identifying attribute (so, use `Mappable` in Swift, which requires an identifier, or `MappableObject` with an `ObjectMapping identifyingAttribute` for Objective-C compatibiity).
@@ -172,7 +172,7 @@ However, if the object is a *property* of a top-level object, you may want to le
 
 The primary advantages of unidentified objects are twofold: First, you don't have to arbitrarily pick an identifier if your object doesn't naturally have one. Second, there's an underlying difference in how deletion is handled. When you delete an object from the Garage, only the top level `Mappable` is deleted. If it points to other `Mappable` objects, those are not deleted. Garage Storage doesn't monitor retain counts on objects, so for safety, only the object specified is removed. However, since unidentified objects are part of the top level object's JSON, and are not separate underlying objects, they will be removed. It's considered best practice for sub objects to be unidentified unless there is a compelling reason otherwise.
 
-### Handling errors
+#### Handling errors
 
 Most of the public APIs in GarageStorage may throw an error. The error may come from Core Data itself, or from GarageStorage detecting a problem. The error will always be of type `NSError`. If an error is thrown, then return values, if any, will be `NULL` or `NO` (false) if the caller is in Objective-C.
 
