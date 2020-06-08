@@ -222,7 +222,7 @@ extension Garage {
                 kvc.setValue(try makeArray(from: array), forKey: keyPath)
             } else if let dictionary = value as? [String:Any], dictionary.isTransformable {
                 kvc.setValue(Date(from: dictionary), forKey: keyPath)
-            } else {
+            } else if let value = value {
                 kvc.setValue(value, forKey: keyPath)
             }
         }
