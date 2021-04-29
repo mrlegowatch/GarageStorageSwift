@@ -291,12 +291,15 @@ class SwiftCodableTests: XCTestCase {
             
             // Set sam's birthdate to 1950/01/01 04:00:00
 
+            let timeZone = TimeZone(identifier: "America/New_York")!
             var dateComponents = DateComponents()
             dateComponents.day = 1
             dateComponents.month = 1
             dateComponents.year = 1950
+            dateComponents.timeZone = timeZone
             
-            let calendar = Calendar.current
+            var calendar = Calendar.current
+            calendar.timeZone = timeZone
             sam.birthdate = calendar.date(from: dateComponents)!
             XCTAssertEqual(sam.birthdate.timeIntervalSinceReferenceDate, -1609441200.0, "Making assumption about the test")
             

@@ -131,18 +131,21 @@ class TestableEdgeCaseTests: XCTestCase {
         
     func testDateFormatter() {
         
+        let timeZone = TimeZone(identifier: "America/New_York")!
         var dateComponents = DateComponents()
         dateComponents.day = 1
         dateComponents.month = 1
         dateComponents.year = 1950
+        dateComponents.timeZone = timeZone
         
-        let calendar = Calendar.current
+        var calendar = Calendar.current
+        calendar.timeZone = timeZone
         let date = calendar.date(from: dateComponents)!
         XCTAssertEqual(date.timeIntervalSinceReferenceDate, -1609441200.0, "Making assumption about the test")
 
         do {
             let dateString = date.isoString
-            XCTAssertEqual(dateString, "1950-01-01T00:00:00-05:00", "isoString failed")
+            XCTAssertEqual(dateString, "1950-01-01T05:00:00Z", "isoString failed")
         }
         
         do {
