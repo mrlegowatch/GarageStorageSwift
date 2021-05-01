@@ -25,7 +25,7 @@ let package = Package(
         .target(
             name: "GarageStorage",
             dependencies: [],
-            path: "Sources"
+            path: "Sources/GarageStorage"
             ),
         .testTarget(
             name: "GarageStorageTests",
