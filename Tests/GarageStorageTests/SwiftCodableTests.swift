@@ -13,6 +13,10 @@ import CoreData
 // This set of tests checks Codable (hence "Swift-y") types.
 class SwiftCodableTests: XCTestCase {
 
+    override class func setUp() {
+        TestSetup.classSetUp()
+    }
+    
     override func setUp() {
         // Reset the underlying storage before running each test.
         let garage = Garage()
@@ -291,7 +295,7 @@ class SwiftCodableTests: XCTestCase {
             
             // Set sam's birthdate to 1950/01/01 04:00:00
 
-            let timeZone = TimeZone(identifier: "America/New_York")!
+            let timeZone = TestSetup.timeZone
             var dateComponents = DateComponents()
             dateComponents.day = 1
             dateComponents.month = 1
@@ -301,7 +305,7 @@ class SwiftCodableTests: XCTestCase {
             var calendar = Calendar.current
             calendar.timeZone = timeZone
             sam.birthdate = calendar.date(from: dateComponents)!
-            XCTAssertEqual(sam.birthdate.timeIntervalSinceReferenceDate, -1609441200.0, "Making assumption about the test")
+            XCTAssertEqual(sam.birthdate.timeIntervalSinceReferenceDate, -1609459200.0, "Making assumption about the test")
             
             XCTAssertNoThrow(try garage.park(sam), "parkObject")
         }
@@ -310,7 +314,7 @@ class SwiftCodableTests: XCTestCase {
             let sam = try? garage.retrieve(SwiftPerson.self, identifier: "Sam")
             XCTAssertNotNil(sam, "Failed to retrieve 'Sam' from garage store")
 
-            XCTAssertEqual(sam?.birthdate.timeIntervalSinceReferenceDate ?? 0, -1609441200.0, "Reconstituted date failed")
+            XCTAssertEqual(sam?.birthdate.timeIntervalSinceReferenceDate ?? 0, -1609459200.0, "Reconstituted date failed")
         }
     }
     

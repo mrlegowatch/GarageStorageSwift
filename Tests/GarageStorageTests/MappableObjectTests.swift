@@ -15,6 +15,10 @@ import CoreData
 // This set of tests use Swift-declared Objective-C-compatible MappableObjects.
 class MappableObjectTests: XCTestCase {
     
+    override class func setUp() {
+        TestSetup.classSetUp()
+    }
+    
     override func setUp() {
         // Reset the underlying storage before running each test.
         let garage = Garage()
