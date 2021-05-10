@@ -11,6 +11,10 @@ import GarageStorage
 
 class SwiftMigrationTests: XCTestCase {
 
+    override class func setUp() {
+        TestSetup.classSetUp()
+    }
+    
     override func setUp() {
         // Reset the underlying storage before running each test.
         let garage = Garage()
