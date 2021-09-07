@@ -79,13 +79,13 @@ public class Garage: NSObject {
         }
     }
     
-    /// Creates a Garage with the specified peristent store descriptions and object mapper.
+    /// Creates a Garage with the specified persistent store descriptions and object mapper.
     ///
     /// - note: Once the Garage has been initialized, you need to execute `loadPersistentStores(completionHandler:)` to instruct the Garage to load the persistent stores and complete the creation of the Core Data stack.
     ///
     /// - parameter persistentStoreDescriptions: An array of PersistentStoreDescription to use in the Garage's Core Data Stack. If nil is passed in, a default description will be used.
     public init(with persistentStoreDescriptions: [PersistentStoreDescription]? = nil) {
-        let garageModel = GarageModel()
+        let garageModel = GarageModel().makeModel()
         self.persistentContainer = PersistentContainer(name: Garage.modelName, managedObjectModel: garageModel)
         let descriptions = persistentStoreDescriptions ?? [Garage.defaultDescription]
         self.persistentContainer.persistentStoreDescriptions = descriptions
