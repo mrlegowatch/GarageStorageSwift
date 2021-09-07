@@ -15,6 +15,10 @@ import CoreData
 // This set of tests require access to internal GarageStorage APIs, to varying degrees.
 class TestableEdgeCaseTests: XCTestCase {
     
+    override class func setUp() {
+        TestSetup.classSetUp()
+    }
+    
     override func setUp() {
         // Reset the underlying storage before running each test.
         let garage = Garage()
@@ -131,18 +135,21 @@ class TestableEdgeCaseTests: XCTestCase {
         
     func testDateFormatter() {
         
+        let timeZone = TestSetup.timeZone
         var dateComponents = DateComponents()
         dateComponents.day = 1
         dateComponents.month = 1
         dateComponents.year = 1950
+        dateComponents.timeZone = timeZone
         
-        let calendar = Calendar.current
+        var calendar = Calendar.current
+        calendar.timeZone = timeZone
         let date = calendar.date(from: dateComponents)!
-        XCTAssertEqual(date.timeIntervalSinceReferenceDate, -1609441200.0, "Making assumption about the test")
+        XCTAssertEqual(date.timeIntervalSinceReferenceDate, -1609459200.0, "Making assumption about the test")
 
         do {
             let dateString = date.isoString
-            XCTAssertEqual(dateString, "1950-01-01T00:00:00-05:00", "isoString failed")
+            XCTAssertEqual(dateString, "1950-01-01T00:00:00Z", "isoString failed")
         }
         
         do {

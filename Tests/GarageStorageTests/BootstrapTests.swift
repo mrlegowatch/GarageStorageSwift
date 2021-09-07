@@ -16,6 +16,7 @@ class BootstrapTests: XCTestCase {
  
     // Ensure that the Documents directory exists (first time in Simulator)
     override class func setUp() {
+        TestSetup.classSetUp()
         let fileManager = FileManager.default
         let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).last!
         if !fileManager.fileExists(atPath: documentsDirectory.path) {
