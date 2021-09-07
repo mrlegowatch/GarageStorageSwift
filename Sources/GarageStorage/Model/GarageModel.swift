@@ -8,7 +8,7 @@
 
 import CoreData
 
-class GarageModel: NSManagedObjectModel {
+struct GarageModel {
     
     private func makeEntity(_ name: String) -> NSEntityDescription {
         let entity = NSEntityDescription()
@@ -25,9 +25,7 @@ class GarageModel: NSManagedObjectModel {
         return attribute
     }
 
-    override init() {
-        super.init()
-            
+    func makeModel() -> NSManagedObjectModel {
         // Create the attributes
         let properties: [NSAttributeDescription] = [
             makeAttribute(CoreDataObject.Attribute.type, type: .stringAttributeType),
@@ -43,10 +41,9 @@ class GarageModel: NSManagedObjectModel {
         let entity = makeEntity(CoreDataObject.entityName)
         entity.properties = properties
         
-        self.entities = [entity]
+        let garageModel = NSManagedObjectModel()
+        garageModel.entities = [entity]
+        return garageModel
     }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) is not supported")
-    }
 }
