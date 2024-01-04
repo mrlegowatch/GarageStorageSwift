@@ -1,8 +1,9 @@
 //
-//  File.swift
-//  
+//  SwiftPet.swift
+//  GarageStorageTests
 //
 //  Created by Brian Arnold on 1/4/24.
+//  Copyright © 2024 Wellframe. All rights reserved.
 //
 
 import Foundation
