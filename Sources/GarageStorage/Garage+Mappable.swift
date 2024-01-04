@@ -1,5 +1,5 @@
 //
-//  Garage+Reference.swift
+//  Garage+Mappable.swift
 //  GarageStorage
 //
 //  Created by Brian Arnold on 10/7/19.

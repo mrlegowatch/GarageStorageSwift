@@ -77,8 +77,8 @@ extension Garage {
         let kvc = object as! NSObject
         let mapping = type(of: object).objectMapping
         for (keyPath, jsonKey) in mapping.mappings {
-            // Note: if kvc.value(forKey:) is throwing an exception and the MappableObject is in Swift,
-            // it could be because the property lacks an '@objc' in front of it.
+            // Note: if kvc.value(forKey:) is throwing an exception (crashing) and the MappableObject is in Swift,
+            // it could be because the property lacks an '@objc' in front of it, or the property name doesn't match.
             let value = kvc.value(forKey: keyPath)
             
             if let mappableObject = value as? MappableObject {
@@ -211,6 +211,8 @@ extension Garage {
         let mapping = type(of: gsObject).objectMapping
         let kvc = gsObject // "as! NSObject" cast not needed here, because it was casted in gsClass
         for (keyPath, jsonKey) in mapping.mappings {
+            // Note: if kvc.setValue(forKey:) is throwing an exception (crashing) and the MappableObject is in Swift,
+            // it could be because the property lacks an '@objc' in front of it, or the property name doesn't match.
             let value = json[jsonKey]
             if let dictionary = value as? [String:Any], dictionary[CoreDataObject.Attribute.identifier] != nil {
                 if dictionary.isAnonymous {
