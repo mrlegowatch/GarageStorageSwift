@@ -227,14 +227,20 @@ class SwiftCodableTests: XCTestCase {
         let oldAddress = swiftAddress()
         let newAddress = swiftAddress2()
         
+        let pet = SwiftPet()
+        
         // Park heterogeneous objects
         do {
             XCTAssertNoThrow(try garage.parkAll([nick, emily, sam]), "parkAll")
             XCTAssertNoThrow(try garage.parkAll([oldAddress, newAddress]), "parkAll")
+            XCTAssertNoThrow(try garage.parkAll([pet]), "parkAll")
         }
         
-        // Validate initial sync status of Persons
+        // Validate sync status of Persons
         do {
+            // WARNING: This will succeed by accident, because there is only one object of type SwiftPerson syncing,
+            // but if there was another object of a different type syncing, then this would fail.
+            // Use retrieveAll(_ objectClass: T, withStatus: SyncStatus) instead to focus on the specific type.
             let syncing: [SwiftPerson] = try garage.retrieveAll(withStatus: .syncing)
             
             XCTAssertEqual(syncing.count, 1, "1 item should be syncing")
@@ -243,25 +249,29 @@ class SwiftCodableTests: XCTestCase {
             //let undetermined: [?] = try garage.retrieveAll(withStatus: .undetermined)
             //XCTAssertEqual(undetermined.count, 4, "4 items should be undetermined")
             
-            let notSynced: [SwiftPerson] = try garage.retrieveAll(withStatus: .notSynced)
+            // This will throw because there are different types of objects not synced.
+            // Don't use retrieveAll without an objectClass if you work with heterogeneous objects that may have the same sync status.
+            // let notSynced: [SwiftPerson] = try garage.retrieveAll(withStatus: .notSynced))
+            
+            // This is the correct way to fetch all of a specific type that are not synced
+            let notSynced: [SwiftPerson] = try garage.retrieveAll(SwiftPerson.self, withStatus: .notSynced)
             XCTAssertEqual(notSynced.count, 0, "no items should be not synced")
         }
         catch {
-            XCTFail("retrieveObjects should not throw an error, \(error)")
+            XCTFail("retrieveAll should not throw an error, \(error)")
         }
         
         // Change Sam's sync status and validate that it changed
         do {
             XCTAssertNoThrow(try garage.setSyncStatus(.notSynced, for: sam), "setSyncStatus")
             
-            let syncing: [SwiftPerson] = try garage.retrieveAll(withStatus: .syncing)
+            // Add in an unrelated object type, to ensure that retrieveAll below works on just one type
+            XCTAssertNoThrow(try garage.setSyncStatus(.notSynced, for: pet), "setSyncStatus")
+            
+            let syncing: [SwiftPerson] = try garage.retrieveAll(SwiftPerson.self, withStatus: .syncing)
             XCTAssertEqual(syncing.count, 0, "items should be syncing")
             
-            // TODO: heterogeneous Codable subtype arrays
-            //let undetermined: [?] = try garage.retrieveAll(withStatus: .undetermined)
-            //XCTAssertEqual(undetermined.count, 4, "4 items should be undetermined")
-            
-            let notSynced: [SwiftPerson] = try garage.retrieveAll(withStatus: .notSynced)
+            let notSynced: [SwiftPerson] = try garage.retrieveAll(SwiftPerson.self, withStatus: .notSynced)
             XCTAssertEqual(notSynced.count, 1, "items should be not synced")
         }
         catch {
