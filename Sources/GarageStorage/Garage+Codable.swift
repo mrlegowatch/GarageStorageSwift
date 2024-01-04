@@ -316,8 +316,8 @@ extension Garage {
     
     /// Returns all the objects of type T conforming to Codable that have a given sync status
     ///
-    /// - parameter syncStatus: The Sync Status
     /// - parameter objectClass: The class of the objects to retrieve
+    /// - parameter syncStatus: The Sync Status
     ///
     /// - returns: An array of objects of type T conforming to Codable. If no objects are found, an empty array is returned.
     public func retrieveAll<T: Decodable & Syncable>(_ objectClass: T.Type, withStatus syncStatus: SyncStatus) throws -> [T] {
