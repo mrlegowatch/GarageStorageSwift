@@ -17,7 +17,7 @@ final class RawStorageTests: XCTestCase {
         garage.deleteAllObjects()
     }
 
-    /// Test what happens if a core data objeect is created, but its `gs_data` never got set.
+    /// Test what happens if a core data object is created, but its `gs_data` never got set.
     func testRawStorage() throws {
         let garage = Garage()
               
