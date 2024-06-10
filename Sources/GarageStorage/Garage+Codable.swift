@@ -133,7 +133,14 @@ extension Garage {
     // MARK: - Retrieving
     
     private func makeCodable<T: Decodable>(from coreDataObject: CoreDataObject) throws -> T {
-        let codable: T = try decodeData(coreDataObject.data)
+        // OLD:
+        // let codable: T = try decodeData(coreDataObject.data)
+        // NEW:
+        guard let data = coreDataObject.gs_data else {
+            throw Garage.makeError("failed to retrieve gs_data from store of type \(T.self)")
+        }
+        let codable: T = try decodeData(data)
+        // END NEW
         return codable
     }
     
