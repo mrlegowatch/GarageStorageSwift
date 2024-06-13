@@ -27,7 +27,7 @@ public class Garage: NSObject {
     
     private static let modelName = "GarageStorage"
     
-    private let persistentContainer: PersistentContainer
+    private let persistentContainer: NSPersistentContainer
 
     /// An optional delegate for serializing/deserializing stored data.
     @objc
@@ -50,19 +50,19 @@ public class Garage: NSObject {
     
     private static var defaultStoreName = "GarageStorage.sqlite"
     
-    private static var defaultDescription: PersistentStoreDescription = {
+    private static var defaultDescription: NSPersistentStoreDescription = {
         return makePersistentStoreDescription(defaultStoreName)
     }()
 
-    /// A convenience function that returns a PersistentStoreDescription of type NSSQLLiteStoreType, with a URL in the application Documents directory, of the specified store name.
+    /// A convenience function that returns a NSPersistentStoreDescription of type NSSQLLiteStoreType, with a URL in the application Documents directory, of the specified store name.
     ///
     /// - parameter storeName: the name of the store.
     ///
-    /// - returns: A PersistentStoreDescription of type NSSQLiteStoreType, with a URL in the application Documents directory, of the specified store name.
-    public static func makePersistentStoreDescription(_ storeName: String) -> PersistentStoreDescription {
+    /// - returns: A NSPersistentStoreDescription of type NSSQLiteStoreType, with a URL in the application Documents directory, of the specified store name.
+    public static func makePersistentStoreDescription(_ storeName: String) -> NSPersistentStoreDescription {
         let applicationDocumentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last!
         let storeURL = applicationDocumentsDirectory.appendingPathComponent(storeName)
-        let description = PersistentStoreDescription(url: storeURL)
+        let description = NSPersistentStoreDescription(url: storeURL)
         description.type = NSSQLiteStoreType
         return description
     }
@@ -83,10 +83,10 @@ public class Garage: NSObject {
     ///
     /// - note: Once the Garage has been initialized, you need to execute `loadPersistentStores(completionHandler:)` to instruct the Garage to load the persistent stores and complete the creation of the Core Data stack.
     ///
-    /// - parameter persistentStoreDescriptions: An array of PersistentStoreDescription to use in the Garage's Core Data Stack. If nil is passed in, a default description will be used.
-    public init(with persistentStoreDescriptions: [PersistentStoreDescription]? = nil) {
+    /// - parameter persistentStoreDescriptions: An array of NSPersistentStoreDescription to use in the Garage's Core Data Stack. If nil is passed in, a default description will be used.
+    public init(with persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil) {
         let garageModel = GarageModel().makeModel()
-        self.persistentContainer = PersistentContainer(name: Garage.modelName, managedObjectModel: garageModel)
+        self.persistentContainer = NSPersistentContainer(name: Garage.modelName, managedObjectModel: garageModel)
         let descriptions = persistentStoreDescriptions ?? [Garage.defaultDescription]
         self.persistentContainer.persistentStoreDescriptions = descriptions
         super.init()
@@ -101,7 +101,7 @@ public class Garage: NSObject {
     /// If there is an error in the loading of the persistent stores, the `NSError` value will be populated.
     ///
     /// - parameter block: Once the loading of the persistent stores has completed, this block will be executed on the calling thread.
-    @objc public func loadPersistentStores(completionHandler block: (PersistentStoreDescription, Error?) -> Void) {
+    @objc public func loadPersistentStores(completionHandler block: @escaping (NSPersistentStoreDescription, Error?) -> Void) {
         persistentContainer.loadPersistentStores(completionHandler: block)
     }
     

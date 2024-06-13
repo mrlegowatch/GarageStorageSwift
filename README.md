@@ -15,7 +15,7 @@ First, create a Garage:
 ```swift
 let garage = Garage()
 ```
-If you wish to specify the name of the store, have multiple Garage stores, or add configuration options to your persistent store, you may alternatively create a garage with a `PersistentStoreDescription`. A convenience class method `makePeristentStoreDescription(_)` with a store name can be used to keep this step as simple as possible. 
+If you wish to specify the name of the store, have multiple Garage stores, or add configuration options to your persistent store, you may alternatively create a garage with a `NSPersistentStoreDescription`. A convenience class method `makePeristentStoreDescription(_)` with a store name can be used to keep this step as simple as possible. 
 
 **Note**: When this library requires iOS 10 or later, this will be replaced with `NSPersistentStoreDescription`.
 

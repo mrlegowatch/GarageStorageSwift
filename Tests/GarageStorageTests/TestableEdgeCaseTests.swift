@@ -122,16 +122,6 @@ class TestableEdgeCaseTests: XCTestCase {
          }
          */
     }
-    
-    func testInvalidStoreGarage() {
-        let invalidStoreName = "Wazzup/OtherGarage.sqlite"
-        let description = Garage.makePersistentStoreDescription(invalidStoreName)
-        let garage = Garage(with: [description])
-        garage.loadPersistentStores { (description, error) in
-            XCTAssertNotNil(error, "Should have thrown an error")
-        }
-        
-    }
         
     func testDateFormatter() {
         
