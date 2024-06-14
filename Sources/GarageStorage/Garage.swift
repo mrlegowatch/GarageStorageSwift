@@ -47,12 +47,6 @@ public class Garage: NSObject {
     }
 
     // MARK: - Initializing
-    
-    private static var defaultStoreName = "GarageStorage.sqlite"
-    
-    private static var defaultDescription: NSPersistentStoreDescription = {
-        return makePersistentStoreDescription(defaultStoreName)
-    }()
 
     /// A convenience function that returns a NSPersistentStoreDescription of type NSSQLLiteStoreType, with a URL in the application Documents directory, of the specified store name.
     ///
@@ -69,8 +63,10 @@ public class Garage: NSObject {
     
     /// Creates a Garage with a default persistent store coordinator and object mapper.
     /// This convenience initializer will also load the persistent store.
-    public convenience override init() {
-        self.init(with: nil)
+    public convenience init(named garageName: String) {
+        let storeName = "\(garageName).sqlite"
+        let description = Garage.makePersistentStoreDescription(storeName)
+        self.init(with: [description])
         
         loadPersistentStores { (description, error) in
             if let error = error {
@@ -83,11 +79,11 @@ public class Garage: NSObject {
     ///
     /// - note: Once the Garage has been initialized, you need to execute `loadPersistentStores(completionHandler:)` to instruct the Garage to load the persistent stores and complete the creation of the Core Data stack.
     ///
-    /// - parameter persistentStoreDescriptions: An array of NSPersistentStoreDescription to use in the Garage's Core Data Stack. If nil is passed in, a default description will be used.
-    public init(with persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil) {
+    /// - parameter persistentStoreDescriptions: An array of NSPersistentStoreDescription to use in the Garage's Core Data Stack.
+    public init(with persistentStoreDescriptions: [NSPersistentStoreDescription]) {
         let garageModel = GarageModel().makeModel()
         self.persistentContainer = NSPersistentContainer(name: Garage.modelName, managedObjectModel: garageModel)
-        let descriptions = persistentStoreDescriptions ?? [Garage.defaultDescription]
+        let descriptions = persistentStoreDescriptions
         self.persistentContainer.persistentStoreDescriptions = descriptions
         super.init()
     }
