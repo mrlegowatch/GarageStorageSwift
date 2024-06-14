@@ -93,7 +93,7 @@ class TestableEdgeCaseTests: XCTestCase {
         let garage = Garage()
         do {
             let fox = ObjCFox()
-            // Ooops, missing identifiableAttribute: fox.name = "Sam"
+            // Oops, missing identifiableAttribute: fox.name = "Sam"
             
             XCTAssertThrowsError(try garage.parkObject(fox), "should have thrown on missing identifier")
         }
