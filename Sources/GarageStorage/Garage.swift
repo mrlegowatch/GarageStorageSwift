@@ -67,8 +67,8 @@ public class Garage: NSObject {
         return description
     }
     
-    /// Creates a Garage with a default peristent store coordinator and object mapper.
-    /// This convenience initalizer will also load the persistent store.
+    /// Creates a Garage with a default persistent store coordinator and object mapper.
+    /// This convenience initializer will also load the persistent store.
     public convenience override init() {
         self.init(with: nil)
         

@@ -35,14 +35,14 @@ extension Dictionary where Key == String, Value == Any {
 
 extension Date {
     
-    /// Returns this transormable type as a JSON dictionary.
+    /// Returns this transformable type as a JSON dictionary.
     func jsonDictionary() -> [String:Any] {
         return [CoreDataObject.Attribute.type: Property.transformableType,
                 Property.transformableType: Property.transformableDate,
                 Property.transformableData: self.isoString]
     }
     
-    /// Creates a date from a JSON dictionary tagged as transormable type.
+    /// Creates a date from a JSON dictionary tagged as transformable type.
     init?(from dictionary: [String:Any]) {
         guard let transformableType = dictionary[Property.transformableType] as? String,
             transformableType == Property.transformableDate else { return nil }
@@ -425,7 +425,7 @@ extension Garage {
     /// - parameter syncStatus: The SyncStatus of the objects
     /// - parameter objects: An array of MappableObjects
     ///
-    /// - throws: true if successful (syncStatus was set on all), false if not. Note: Even if this returns false, there still could be objects with their syncStatus was set successfully. A false repsonse simply indicates a minimum of 1 failure.
+    /// - throws: true if successful (syncStatus was set on all), false if not. Note: Even if this returns false, there still could be objects with their syncStatus was set successfully. A false response simply indicates a minimum of 1 failure.
     @objc(setSyncStatus:forObjects:error:)
     public func setSyncStatus(_ syncStatus: SyncStatus, for objects: [MappableObject]) throws {
         for object in objects {
