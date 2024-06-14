@@ -364,4 +364,13 @@ class MappableObjectTests: XCTestCase {
             XCTAssertEqual(sam?.birthdate.timeIntervalSinceReferenceDate ?? 0, -1609459200.0, "Reconstituted date failed")
         }
     }
+    
+    func testNonExistentObject() {
+        let garage = Garage()
+        
+        do {
+            let sam = try? garage.retrieveObject(ObjCPerson.self, identifier: "Frodo")
+            XCTAssertNil(sam, "Should not have found Frodo")
+        }
+    }
 }
