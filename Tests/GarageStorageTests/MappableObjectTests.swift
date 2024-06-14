@@ -21,12 +21,12 @@ class MappableObjectTests: XCTestCase {
     
     override func setUp() {
         // Reset the underlying storage before running each test.
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         garage.deleteAllObjects()
     }
     
     func testMappableObject() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Create a "Sam" person and park it.
         do {
@@ -50,7 +50,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testArrayOfMappable() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Create a pair of people and park them.
         do {
@@ -73,7 +73,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testMissingIdentifyingAttribute() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // This should emit a logging message.
         // FIX: Once the GS implementation is converted to Swift, as each implementation is
@@ -87,7 +87,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testMissingReferencedObject() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
 
         // Create a "Sam" person and park it.
         do {
@@ -112,7 +112,7 @@ class MappableObjectTests: XCTestCase {
     
     func testNilObject() {
         // This tests the Objective-C interface to parkObject, which throws in Swift.
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // This should emit a logging message, and an error.
         
@@ -122,7 +122,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testRetrievingCollections() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Park heterogeneous objects
         do {
@@ -155,7 +155,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testDeletingObject() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Park heterogeneous objects
         do {
@@ -182,7 +182,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testDeletingCollections() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Park heterogeneous objects
         do {
@@ -215,7 +215,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testDeletingAllObjects() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Park heterogeneous objects
         do {
@@ -253,7 +253,7 @@ class MappableObjectTests: XCTestCase {
     }
 
     func testSyncStatus() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         let sam = objCPerson()
         let nick = objCPerson2()
@@ -326,7 +326,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testInvalidSyncStatus() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Create, but don't park, sam
         let sam = objCPerson()
@@ -338,7 +338,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testDates() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         do {
             let sam = objCPerson()

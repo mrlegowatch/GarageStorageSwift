@@ -17,3 +17,6 @@ import Foundation
     }
     
 }
+
+/// Use this test store name for Garage Storage tests.
+let testStoreName = "GarageStorageTests"
