@@ -366,7 +366,7 @@ class MappableObjectTests: XCTestCase {
     }
     
     func testNonExistentObject() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Swift behavior: be able to return nil for not found, not throw an error.
         do {
