@@ -17,12 +17,12 @@ class SwiftMigrationTests: XCTestCase {
     
     override func setUp() {
         // Reset the underlying storage before running each test.
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         garage.deleteAllObjects()
     }
 
     func testOneMappable() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         do {
             let nick = objCPerson2()
@@ -39,7 +39,7 @@ class SwiftMigrationTests: XCTestCase {
     }
     
     func testNestedMappable() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Save Sam as a MappableObject (Objective-C-based) person
         do {

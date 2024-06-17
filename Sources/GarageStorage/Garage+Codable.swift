@@ -133,14 +133,10 @@ extension Garage {
     // MARK: - Retrieving
     
     private func makeCodable<T: Decodable>(from coreDataObject: CoreDataObject) throws -> T {
-        // OLD:
-        // let codable: T = try decodeData(coreDataObject.data)
-        // NEW:
         guard let data = coreDataObject.gs_data else {
             throw Garage.makeError("failed to retrieve gs_data from store of type \(T.self)")
         }
         let codable: T = try decodeData(data)
-        // END NEW
         return codable
     }
     
@@ -158,7 +154,7 @@ extension Garage {
     /// - returns: An object conforming to the specified class, or nil if it was not found.
     public func retrieve<T: Decodable>(_ objectClass: T.Type, identifier: String) throws -> T? {
         let className = String(describing: T.self)
-        let coreDataObject = try fetchCoreDataObject(for: className, identifier: identifier)
+        guard let coreDataObject = fetchObject(for: className, identifier: identifier) else { return nil }
         return try makeCodable(from: coreDataObject)
     }
     
@@ -170,7 +166,7 @@ extension Garage {
     /// - returns: An object conforming to the specified class, or nil if it was not found.
     public func retrieve<T: Decodable & Syncable>(_ objectClass: T.Type, identifier: String) throws -> T? {
         let className = String(describing: T.self)
-        let coreDataObject = try fetchCoreDataObject(for: className, identifier: identifier)
+        guard let coreDataObject = fetchObject(for: className, identifier: identifier) else { return nil }
         return try makeSyncable(from: coreDataObject)
     }
     

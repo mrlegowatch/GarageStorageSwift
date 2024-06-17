@@ -21,7 +21,7 @@ class TestableEdgeCaseTests: XCTestCase {
     
     override func setUp() {
         // Reset the underlying storage before running each test.
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         garage.deleteAllObjects()
     }
          
@@ -32,7 +32,7 @@ class TestableEdgeCaseTests: XCTestCase {
     }
     
     func testArrayOfArray() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         do {
             let backpack = InfiniteBag("Backpack")
@@ -56,7 +56,7 @@ class TestableEdgeCaseTests: XCTestCase {
     }
     
     func testSyncableAnonymous() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         do {
             let address = ObjCSyncingAddress()
@@ -90,10 +90,10 @@ class TestableEdgeCaseTests: XCTestCase {
     }
     
     func testMissingIdentifiable() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         do {
             let fox = ObjCFox()
-            // Ooops, missing identifiableAttribute: fox.name = "Sam"
+            // Oops, missing identifiableAttribute: fox.name = "Sam"
             
             XCTAssertThrowsError(try garage.parkObject(fox), "should have thrown on missing identifier")
         }
@@ -108,7 +108,7 @@ class TestableEdgeCaseTests: XCTestCase {
         print("Skipping test for missing @objc, because value(forKey:) throws an exception that isn't caught by XCTest")
         /*
          TODO: when we can catch an exception from value(forKey:) we can re-enabled this
-         let garage = Garage()
+         let garage = Garage(named: testStoreName)
          do {
          let goat = Goat()
          goat.name = "Sam"
@@ -121,16 +121,6 @@ class TestableEdgeCaseTests: XCTestCase {
          XCTAssertNil(goat, "retrieveObject should have thrown an error")
          }
          */
-    }
-    
-    func testInvalidStoreGarage() {
-        let invalidStoreName = "Wazzup/OtherGarage.sqlite"
-        let description = Garage.makePersistentStoreDescription(invalidStoreName)
-        let garage = Garage(with: [description])
-        garage.loadPersistentStores { (description, error) in
-            XCTAssertNotNil(error, "Should have thrown an error")
-        }
-        
     }
         
     func testDateFormatter() {

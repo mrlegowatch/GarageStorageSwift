@@ -35,14 +35,14 @@ extension Dictionary where Key == String, Value == Any {
 
 extension Date {
     
-    /// Returns this transormable type as a JSON dictionary.
+    /// Returns this transformable type as a JSON dictionary.
     func jsonDictionary() -> [String:Any] {
         return [CoreDataObject.Attribute.type: Property.transformableType,
                 Property.transformableType: Property.transformableDate,
                 Property.transformableData: self.isoString]
     }
     
-    /// Creates a date from a JSON dictionary tagged as transormable type.
+    /// Creates a date from a JSON dictionary tagged as transformable type.
     init?(from dictionary: [String:Any]) {
         guard let transformableType = dictionary[Property.transformableType] as? String,
             transformableType == Property.transformableDate else { return nil }
@@ -171,7 +171,10 @@ extension Garage {
     
     private func makeMappableObject(from coreDataObject: CoreDataObject) throws -> MappableObject {
         let className = coreDataObject.gs_type!
-        let mappedObject = try decodeData(coreDataObject.data, className: className)
+        guard let data = coreDataObject.gs_data else {
+            throw Garage.makeError("failed to retrieve gs_data from store of type \(className)")
+        }
+        let mappedObject = try decodeData(data, className: className)
         
         if let syncableObject = mappedObject as? SyncableObject {
             syncableObject.syncStatus = coreDataObject.syncStatus
@@ -333,12 +336,10 @@ extension Garage {
 
     // MARK: - Retrieving
     
-    private func retrieveMappableObject(_ objectClass: AnyClass, identifier: String) throws -> MappableObject {
+    private func retrieveMappableObject(_ objectClass: AnyClass, identifier: String) throws -> MappableObject? {
         let className = NSStringFromClass(objectClass)
         
-        guard let coreDataObject = fetchObject(for: className, identifier: identifier) else {
-            throw Garage.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
-        }
+        guard let coreDataObject = fetchObject(for: className, identifier: identifier) else { return nil }
         
         return try makeMappableObject(from: coreDataObject)
     }
@@ -361,7 +362,11 @@ extension Garage {
     /// - returns: An object conforming to GSMappableObject.
     @objc(retrieveObjectOfClass:identifier:error:)
     public func __retrieveObjectObjC(_ objectClass: AnyClass, identifier: String) throws -> Any {
-        return try retrieveMappableObject(objectClass, identifier: identifier)
+        guard let object = try retrieveMappableObject(objectClass, identifier: identifier) else {
+            // This "throws" an error in order for the return value to be nil in Objective-C.
+            throw Garage.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
+        }
+        return object
     }
 
     private func makeMappableObjects(from coreDataObjects: [CoreDataObject]) throws -> [MappableObject] {
@@ -425,7 +430,7 @@ extension Garage {
     /// - parameter syncStatus: The SyncStatus of the objects
     /// - parameter objects: An array of MappableObjects
     ///
-    /// - throws: true if successful (syncStatus was set on all), false if not. Note: Even if this returns false, there still could be objects with their syncStatus was set successfully. A false repsonse simply indicates a minimum of 1 failure.
+    /// - throws: true if successful (syncStatus was set on all), false if not. Note: Even if this returns false, there still could be objects with their syncStatus was set successfully. A false response simply indicates a minimum of 1 failure.
     @objc(setSyncStatus:forObjects:error:)
     public func setSyncStatus(_ syncStatus: SyncStatus, for objects: [MappableObject]) throws {
         for object in objects {

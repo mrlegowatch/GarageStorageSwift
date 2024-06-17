@@ -19,12 +19,12 @@ class SwiftCodableTests: XCTestCase {
     
     override func setUp() {
         // Reset the underlying storage before running each test.
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         garage.deleteAllObjects()
     }
     
     func testMappable() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Create a "Sam" person and park it.
         do {
@@ -49,7 +49,7 @@ class SwiftCodableTests: XCTestCase {
 
 
     func testArrayOfMappable() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Create a pair of people and park them.
         do {
@@ -72,7 +72,7 @@ class SwiftCodableTests: XCTestCase {
     }
 
     func testRetrievingCollections() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Park heterogeneous objects
         do {
@@ -115,7 +115,7 @@ class SwiftCodableTests: XCTestCase {
     
 
     func testDeletingObject() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Park heterogeneous objects
         do {
@@ -143,7 +143,7 @@ class SwiftCodableTests: XCTestCase {
     }
  
     func testDeletingCollections() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Park heterogeneous objects
         do {
@@ -178,7 +178,7 @@ class SwiftCodableTests: XCTestCase {
 
 
     func testDeletingAllObjects() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Park heterogeneous objects
         do {
@@ -218,7 +218,7 @@ class SwiftCodableTests: XCTestCase {
 
 
     func testSyncStatus() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         let sam = swiftPerson()
         let nick = swiftPerson2()
@@ -286,7 +286,7 @@ class SwiftCodableTests: XCTestCase {
     }
     
     func testInvalidSyncStatus() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         // Create, but don't park, sam
         let sam = swiftPerson()
@@ -298,7 +298,7 @@ class SwiftCodableTests: XCTestCase {
     }
     
     func testDates() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         do {
             let sam = swiftPerson()
@@ -329,7 +329,7 @@ class SwiftCodableTests: XCTestCase {
     }
     
     func testMappables() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
 
         do {
             // Configure a tree consisting of lots of referenced branches
@@ -366,6 +366,18 @@ class SwiftCodableTests: XCTestCase {
 
             XCTAssertEqual(rightBranch?.branches.count ?? 0, 2, "Should have 2 branches")
 
+        }
+    }
+    
+    func testNonExistentObject() {
+        let garage = Garage(named: testStoreName)
+        
+        do {
+            let frodo = try garage.retrieve(SwiftPerson.self, identifier: "Frodo")
+            XCTAssertNil(frodo, "Should be nil")
+        }
+        catch {
+            XCTFail("Should not have thrown an error: \(error)")
         }
     }
 }
