@@ -368,4 +368,16 @@ class SwiftCodableTests: XCTestCase {
 
         }
     }
+    
+    func testNonExistentObject() {
+        let garage = Garage()
+        
+        do {
+            let frodo = try garage.retrieve(SwiftPerson.self, identifier: "Frodo")
+            XCTAssertNil(frodo, "Should be nil")
+        }
+        catch {
+            XCTFail("Should not have thrown an error: \(error)")
+        }
+    }
 }

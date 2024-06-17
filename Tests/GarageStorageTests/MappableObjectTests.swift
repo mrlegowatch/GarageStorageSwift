@@ -364,4 +364,25 @@ class MappableObjectTests: XCTestCase {
             XCTAssertEqual(sam?.birthdate.timeIntervalSinceReferenceDate ?? 0, -1609459200.0, "Reconstituted date failed")
         }
     }
+    
+    func testNonExistentObject() {
+        let garage = Garage()
+        
+        // Swift behavior: be able to return nil for not found, not throw an error.
+        do {
+            let frodo = try garage.retrieveObject(ObjCPerson.self, identifier: "Frodo")
+            XCTAssertNil(frodo, "Should be nil")
+        }
+        catch {
+            XCTFail("Should not have thrown an error: \(error)")
+        }
+        
+        // Objective-C behavior: throw an error so that the ObjC runtime can return nil to an ObjC caller.
+        do {
+            _ = try garage.__retrieveObjectObjC(ObjCPerson.self, identifier: "Frodo")
+            XCTFail("Should have thrown an error")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("failed to retrieve object"))
+        }
+    }
 }

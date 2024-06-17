@@ -333,12 +333,10 @@ extension Garage {
 
     // MARK: - Retrieving
     
-    private func retrieveMappableObject(_ objectClass: AnyClass, identifier: String) throws -> MappableObject {
+    private func retrieveMappableObject(_ objectClass: AnyClass, identifier: String) throws -> MappableObject? {
         let className = NSStringFromClass(objectClass)
         
-        guard let coreDataObject = fetchObject(for: className, identifier: identifier) else {
-            throw Garage.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
-        }
+        guard let coreDataObject = fetchObject(for: className, identifier: identifier) else { return nil }
         
         return try makeMappableObject(from: coreDataObject)
     }
@@ -361,7 +359,11 @@ extension Garage {
     /// - returns: An object conforming to GSMappableObject.
     @objc(retrieveObjectOfClass:identifier:error:)
     public func __retrieveObjectObjC(_ objectClass: AnyClass, identifier: String) throws -> Any {
-        return try retrieveMappableObject(objectClass, identifier: identifier)
+        guard let object = try retrieveMappableObject(objectClass, identifier: identifier) else {
+            // This "throws" an error in order for the return value to be nil in Objective-C.
+            throw Garage.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
+        }
+        return object
     }
 
     private func makeMappableObjects(from coreDataObjects: [CoreDataObject]) throws -> [MappableObject] {
