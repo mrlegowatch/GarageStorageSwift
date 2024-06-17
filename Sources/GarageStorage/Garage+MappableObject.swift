@@ -171,7 +171,10 @@ extension Garage {
     
     private func makeMappableObject(from coreDataObject: CoreDataObject) throws -> MappableObject {
         let className = coreDataObject.gs_type!
-        let mappedObject = try decodeData(coreDataObject.data, className: className)
+        guard let data = coreDataObject.gs_data else {
+            throw Garage.makeError("failed to retrieve gs_data from store of type \(className)")
+        }
+        let mappedObject = try decodeData(data, className: className)
         
         if let syncableObject = mappedObject as? SyncableObject {
             syncableObject.syncStatus = coreDataObject.syncStatus

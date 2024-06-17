@@ -370,7 +370,7 @@ class SwiftCodableTests: XCTestCase {
     }
     
     func testNonExistentObject() {
-        let garage = Garage()
+        let garage = Garage(named: testStoreName)
         
         do {
             let frodo = try garage.retrieve(SwiftPerson.self, identifier: "Frodo")
