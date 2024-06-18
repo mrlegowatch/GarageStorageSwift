@@ -16,7 +16,7 @@ If you decide later to change the property names or types, you may subsequently 
 
 ### Convert identifiable objects to Mappable
 
-Change any `MappableObjects` with a `identifyingAttribute` to `Mappable`. Keep it as a `class`. If it's being used and stored as a *reference*, it ought to remain a *reference type*. Move the `identifyingAttribute` to the `id` property of the class.
+Change any `MappableObject` that assigns an `identifyingAttribute` to `Mappable`. Keep it as a `class`. If it's being used and stored as a *reference*, it ought to remain a *reference type*. Move the `identifyingAttribute` to the `id` property of the class. Note: if it does not assign an `identifyingAttribute`, change the class to conform to `Codable`, instead of to Mappable (see next section).
 
 ### Convert anonymous objects to structs conforming to Codable
 
