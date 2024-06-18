@@ -20,7 +20,7 @@ public class ObjectMapping: NSObject {
     
     /// Optionally, specify an identifying attribute that Garage Storage will use to maintain a unique reference to this instance. If left nil, the object will be stored as anonymous. If specified, the attribute must be included in the mappings.
     ///
-    /// - note: If the *value* of the attribute is nil, the object will be stored as anonymous, and a warning will be logged when parked.
+    /// - note: If the *value* of the attribute is nil, the object will be stored as anonymous, and a warning will be logged if parked as a top-level object.
     @objc public var identifyingAttribute: String? {
         set {
             guard let value = newValue else { return }
