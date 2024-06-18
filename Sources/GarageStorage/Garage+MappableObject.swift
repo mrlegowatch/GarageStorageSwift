@@ -310,9 +310,11 @@ extension Garage {
         autosave()
     }
 
-    /// Add an object to the Garage. Parking an object without an identifier set will go into the Garage as unidentified.
+    /// Adds an Objective-C-compatible object to the Garage.
     ///
-    /// - parameter object: An object that conforms to GSMappableObject
+    /// Parking an object without an identifier set will go into the Garage as unidentified.
+    ///
+    /// - parameter object: An object that conforms to MappableObject
     @objc(parkObjectInGarage:error:)
     public func __parkObjectObjC(_ object: MappableObject?) throws {
         guard let object = object else {
@@ -322,7 +324,9 @@ extension Garage {
         try parkObject(object)
     }
 
-    /// Adds an array of objects to the garage. Parking an object without an identifier set will go into the Garage as unidentified.
+    /// Adds an array of Objective-C objects to the Garage.
+    ///
+    /// Parking an object without an identifier set will go into the Garage as unidentified.
     ///
     /// - parameter objects: An array of objects, all of which must conform to MappableObject.
     @objc(parkObjectsInGarage:error:)
@@ -344,7 +348,7 @@ extension Garage {
         return try makeMappableObject(from: coreDataObject)
     }
 
-    /// Fetches an object of a given class with a given identifier from the Garage.
+    /// Retrieves an object of a given class conforming to MappableObject with a given identifier from the Garage.
     ///
     /// - parameter objectClass: The class of the object to retrieve. This class must conform to MappableObject.
     /// - parameter identifier: The identifier of the object to retrieve. This is the identifier specified by that object's mapping.
@@ -354,7 +358,7 @@ extension Garage {
         return try retrieveMappableObject(objectClass.self, identifier: identifier) as? T
     }
 
-    /// Fetches an object of a given class with a given identifier from the Garage.
+    /// Retrieves an object of a given class with a given identifier from the Garage.
     ///
     /// - parameter objectClass: The class of the object to retrieve. This class must conform to GSMappableObject
     /// - parameter identifier: The identifier of the object to retrieve. This is the identifier specified by that object's mapping.
@@ -386,7 +390,7 @@ extension Garage {
         return try makeMappableObjects(from: coreDataObjects)
     }
 
-    /// Fetches all objects of a given class from the Garage.
+    /// Retrieves all objects of a given class from the Garage.
     ///
     /// - parameter objectClass: The class of the objects to retrieve
     ///
@@ -395,7 +399,7 @@ extension Garage {
         return try retrieveAllMappableObjects(objectClass.self) as!  [T]
     }
 
-    /// Fetches all objects of a given class from the Garage.
+    /// Retrieves all objects of a given class from the Garage.
     ///
     /// - parameter objectClass: The class of the objects to retrieve
     ///
@@ -450,7 +454,7 @@ extension Garage {
         return coreDataObject.syncStatus
     }
 
-    /// Returns all the MappableObjects that have a given sync status
+    /// Returns all the MappableObjects that have a given sync status.
     ///
     /// - parameter syncStatus: The Sync Status
     ///
@@ -462,7 +466,7 @@ extension Garage {
         return try makeMappableObjects(from: coreDataObjects)
     }
     
-    /// Returns all the MappableObjects of a given class that have a given sync status
+    /// Returns all the MappableObjects of a given class that have a given sync status.
     ///
     /// - parameter syncStatus: The Sync Status
     /// - parameter objectClass: The Class of the MappableObjects
@@ -478,7 +482,9 @@ extension Garage {
 
     // MARK: - Deleting
        
-    /// Deletes an object from the Garage. Note that deleting an object will only delete that specific object, and not any of its member variables. While parking an object into the garage is recursive, and member variables will be parked, deletion is not. Therefore, to remove an object's member variables from the Garage, make sure to remove them individually first.
+    /// Deletes an object from the Garage.
+    ///
+    /// Note that deleting an object will only delete that specific object, and not any of its member variables. While parking an object into the Garage is recursive, and member variables will be parked, deletion is not. Therefore, to remove an object's member variables from the Garage, make sure to remove them individually first.
     ///
     /// - parameter object:    An object conforming to MappableObject
     @objc(deleteObjectFromGarage:error:)
@@ -487,7 +493,7 @@ extension Garage {
         try delete(coreDataObject)
     }
 
-    /// Deletes all objects of a given type from the Garage
+    /// Deletes all objects of a given Objective-C class conforming to MappableObject from the Garage.
     ///
     /// - parameter objectClass: An object class conforming to MappableObject
     @objc(deleteAllObjectsFromGarageOfClass:)

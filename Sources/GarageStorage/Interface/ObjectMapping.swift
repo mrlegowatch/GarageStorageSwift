@@ -10,6 +10,9 @@ import Foundation
 
 
 /// Provides mappings and optionally an identifying attribute for encoding and decoding an Objective-C MappableObject's properties.
+/// 
+/// Properties must be declared with the @objc keyword.
+/// Valid property types include: Int, Double, Bool, String, Date, Array, Dictionary, and other MappableObject types.
 @objc(GSObjectMapping)
 public class ObjectMapping: NSObject {
     

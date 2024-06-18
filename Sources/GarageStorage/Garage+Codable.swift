@@ -50,7 +50,7 @@ extension Garage {
         return coreDataObject
     }
     
-    /// Add an object to the Garage.
+    /// Adds an object that conforms to Mappable to the Garage.
     ///
     /// - parameter object: An object of type T that conforms to Mappable.
     public func park<T: Mappable>(_ object: T) throws {
@@ -59,7 +59,7 @@ extension Garage {
         autosave()
     }
     
-    /// Add an object to the Garage.
+    /// Adds an object that conforms to Mappable and Syncable to the Garage.
     ///
     /// - parameter object: An object of type T that conforms to Mappable and Syncable.
     public func park<T: Mappable & Syncable>(_ object: T) throws {
@@ -68,7 +68,7 @@ extension Garage {
         autosave()
     }
     
-    /// Add an object to the Garage.
+    /// Adds an object that conforms to Encodable and Hashable to the Garage.
     ///
     /// - parameter object: An object of type T that conforms to Encodable and Hashable.
     public func park<T: Encodable & Hashable>(_ object: T) throws {
@@ -77,7 +77,7 @@ extension Garage {
         autosave()
     }
     
-    /// Add an object to the Garage.
+    /// Adds an object that conforms to Encodable, Hashable, and Syncable to the Garage.
     ///
     /// - parameter object: An object of type T that conforms to Encodable, Hashable and Syncable.
     public func park<T: Encodable & Hashable & Syncable>(_ object: T) throws {
@@ -86,7 +86,7 @@ extension Garage {
         autosave()
     }
     
-    /// Adds an array of objects to the garage.
+    /// Adds an array of objects that conform to Mappable to the Garage.
     ///
     /// - parameter objects: An array of objects of the same type T, that conform to Mappable.
     public func parkAll<T: Mappable>(_ objects: [T]) throws {
@@ -97,7 +97,7 @@ extension Garage {
         autosave()
     }
     
-    /// Adds an array of objects to the garage.
+    /// Adds an array of objects that conform to Mappable and Syncable to the Garage.
     ///
     /// - parameter objects: An array of objects of the same type T, that conform to Mappable and Syncable.
     public func parkAll<T: Mappable & Syncable>(_ objects: [T]) throws {
@@ -108,7 +108,7 @@ extension Garage {
         autosave()
     }
     
-    /// Adds an array of objects to the garage.
+    /// Adds an array of objects that conform to Encodable and Hashable to the Garage.
     ///
     /// - parameter objects: An array of objects of the same type T, that conform to Encodable and Hashable.
     public func parkAll<T: Encodable & Hashable>(_ objects: [T]) throws {
@@ -119,7 +119,7 @@ extension Garage {
         autosave()
     }
     
-    /// Adds an array of objects to the garage.
+    /// Adds an array of objects that conform to Encodable, Hashable, and Syncable to the Garage.
     ///
     /// - parameter objects: An array of objects of the same type T, that conform to Encodable, Hashable and Syncable.
     public func parkAll<T: Encodable & Hashable & Syncable>(_ objects: [T]) throws {
@@ -146,7 +146,7 @@ extension Garage {
         return syncable
     }
     
-    /// Fetches an object of a given class with a given identifier from the Garage.
+    /// Retrieves an object of a given class  conforming to Decodable with a given identifier from the Garage.
     ///
     /// - parameter objectClass: The type of the object to retrieve. This class must conform to Decodable.
     /// - parameter identifier: The identifier of the object to retrieve. This is the identifier specified by that object's mapping.
@@ -158,9 +158,9 @@ extension Garage {
         return try makeCodable(from: coreDataObject)
     }
     
-    /// Fetches an object of a given class with a given identifier from the Garage.
+    /// Retrieves an object of a given class conforming to Decodable and Syncable with a given identifier from the Garage.
     ///
-    /// - parameter objectClass: The type of the object to retrieve. This class must conform to Decodable.
+    /// - parameter objectClass: The type of the object to retrieve. This class must conform to Decodable and Syncable.
     /// - parameter identifier: The identifier of the object to retrieve. This is the identifier specified by that object's mapping.
     ///
     /// - returns: An object conforming to the specified class, or nil if it was not found.
@@ -192,7 +192,7 @@ extension Garage {
         return objects
     }
     
-    /// Fetches all objects of a given class from the Garage.
+    /// Retrieves all objects of a given class conforming to Decodable from the Garage.
     ///
     /// - parameter objectClass: The class of the objects to retrieve
     ///
@@ -203,7 +203,7 @@ extension Garage {
         return try makeCodableObjects(from: coreDataObjects)
     }
     
-    /// Fetches all objects of a given class from the Garage.
+    /// Retrieves all objects of a given class conforming to Decodable and Syncable from the Garage.
     ///
     /// - parameter objectClass: The class of the objects to retrieve
     ///
@@ -221,7 +221,7 @@ extension Garage {
         coreDataObject.syncStatus = syncStatus
     }
     
-    /// Sets the sync status for a given object of type T that conforms to Mappable and Syncable.
+    /// Sets the sync status for a given object conforming to Mappable and Syncable.
     ///
     /// - parameter syncStatus: The SyncStatus of the object
     /// - parameter object: An object of type T that conforms to Mappable and Syncable
@@ -235,7 +235,7 @@ extension Garage {
         autosave()
     }
     
-    /// Sets the sync status for a given object of type T that conforms to Hashable and Syncable.
+    /// Sets the sync status for a given object conforming to Hashable and Syncable.
     ///
     /// - parameter syncStatus: The SyncStatus of the object
     /// - parameter object: An object of type T that conforms to Hashable and Syncable
@@ -254,7 +254,7 @@ extension Garage {
     /// - parameter syncStatus: The SyncStatus of the objects
     /// - parameter objects: An array of objects of the same type T conforming to Mappable and Syncable.
     ///
-    /// - throws: if there was a problem setting the sync status for an object. Note: Even if this throws, there still could be objects with their syncStatus was set successfully. A false repsonse simply indicates at least one failure.
+    /// - throws: if there was a problem setting the sync status for an object. Note: Even if this throws, there still could be objects with their syncStatus was set successfully. A false response simply indicates at least one failure.
     public func setSyncStatus<T: Mappable & Syncable>(_ syncStatus: SyncStatus, for objects: [T]) throws {
         let className = String(describing: T.self)
         for object in objects {
@@ -270,7 +270,7 @@ extension Garage {
     /// - parameter syncStatus: The SyncStatus of the objects
     /// - parameter objects: An array of objects of the same type T conforming to Hashable and Syncable.
     ///
-    /// - throws: if there was a problem setting the sync status for an object. Note: Even if this throws, there still could be objects with their syncStatus was set successfully. A false repsonse simply indicates at least one failure.
+    /// - throws: if there was a problem setting the sync status for an object. Note: Even if this throws, there still could be objects with their syncStatus was set successfully. A false response simply indicates at least one failure.
     public func setSyncStatus<T: Hashable & Syncable>(_ syncStatus: SyncStatus, for objects: [T]) throws {
         let className = String(describing: T.self)
         for object in objects {
@@ -287,7 +287,7 @@ extension Garage {
         return coreDataObject.syncStatus
     }
     
-    /// Returns the sync status for an object.
+    /// Returns the sync status for an object conforming to Mappable and Syncable.
     ///
     /// - parameter object: An object conforming to Mappable and Syncable
     ///
@@ -297,7 +297,7 @@ extension Garage {
         return try syncStatus(for: object, identifier: identifier)
     }
 
-    /// Returns the sync status for an object.
+    /// Returns the sync status for an object conforming to Hashable and Syncable.
     ///
     /// - parameter object: An object conforming to Hashable and Syncable
     ///
@@ -307,7 +307,7 @@ extension Garage {
         return try syncStatus(for: object, identifier: identifier)
     }
 
-    /// Returns all the objects of type T conforming to Codable that have a given sync status
+    /// Returns all the objects of type T conforming to Codable and Syncable that have a given sync status.
     ///
     /// - parameter syncStatus: The Sync Status
     ///
@@ -317,7 +317,7 @@ extension Garage {
         return try makeSyncableObjects(from: coreDataObjects)
     }
     
-    /// Returns all the objects of type T conforming to Codable that have a given sync status
+    /// Returns all the objects of type T conforming to Decodable and Syncable that have a given sync status.
     ///
     /// - parameter objectClass: The class of the objects to retrieve
     /// - parameter syncStatus: The Sync Status
@@ -331,31 +331,32 @@ extension Garage {
 
     // MARK: - Deleting
     
+    // throws: 
     private func deleteCoreDataObject<T>(_ object: T, identifier: String) throws {
         let className = String(describing: T.self)
         let coreDataObject = try fetchCoreDataObject(for: className, identifier: identifier)
         try delete(coreDataObject)
     }
     
-    /// Deletes an object of a given type from the Garage
+    /// Deletes an object conforming to Mappable from the Garage.
     ///
-    /// - parameter object: A type conforming to Codable
+    /// - parameter object: A type conforming to Mappable
     public func delete<T: Mappable>(_ object: T) throws {
         let identifier = object.id
         try deleteCoreDataObject(object, identifier: identifier)
     }
  
-    /// Deletes an object of a given type from the Garage
+    /// Deletes an object conforming to Hashable from the Garage.
     ///
-    /// - parameter object: A type conforming to Codable
+    /// - parameter object: A type conforming to Hashable
     public func delete<T: Hashable>(_ object: T) throws {
         let identifier = "\(object.hashValue)"
         try deleteCoreDataObject(object, identifier: identifier)
     }
 
-    /// Deletes all objects of a given type from the Garage
+    /// Deletes all objects of a given type T from the Garage.
     ///
-    /// - parameter objectClass: A type conforming to Codable
+    /// - parameter objectClass: A type
     public func deleteAll<T>(_ objectClass: T.Type) {
         let className = String(describing: T.self)
         let coreDataObjects = fetchObjects(for: className, identifier: nil)

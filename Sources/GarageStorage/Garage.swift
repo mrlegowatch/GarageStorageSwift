@@ -39,7 +39,7 @@ public class Garage: NSObject {
 
     /// Autosave is set to true by default.
     ///
-    /// When set to true, the garage will be saved after any operation that causes a change to the underlying Core Data Managed Object Context, including park(), setSyncStatus, and delete. When set to false, `save()` must be called in order to persist those changes. You might want to set this to false to perform batch changes to many objects, to optimize performance.
+    /// When set to true, the garage will be saved after any operation that causes a change to the underlying Core Data Managed Object Context, including `park()`, `setSyncStatus()`, and `delete()`. When set to false, `save()` must be called instead, in order to persist those changes. You might want to set this to false to perform batch changes to many objects, to optimize performance.
     @objc(autosaveEnabled)
     public var isAutosaveEnabled = true
     
