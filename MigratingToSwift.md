@@ -1,6 +1,6 @@
 #  Migrating from Objective-C to Swift
 
-If you start using GarageStorage with Objective-C-compatible types, and subsequently migrate all of your code to Swift, here are some tips you can follow to make the migration as painless as possible.
+If you start using GarageStorage with Objective-C-compatible types, and subsequently migrate your code to Swift, here are some tips you can follow to make the migration as painless as possible, while also adopting _idiomatic Swift_.
 
 ## For in-place migration
 

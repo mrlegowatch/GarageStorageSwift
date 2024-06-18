@@ -138,7 +138,7 @@ The primary advantages of unidentified objects are twofold: First, you don't hav
 
 Most of the public APIs in GarageStorage may throw an error. The error may come from Core Data itself, or from GarageStorage detecting a problem. The error will always be of type `NSError`.
 
-Since normal code flow should never rely on errors being thrown, the only kinds of errors GarageStorage throws are programmer errors, or problems associated with memory corruption (failure to decode JSON, for example).
+Since normal code flow should never rely on errors being thrown, the only kinds of errors GarageStorage throws are programmer errors, or memory or data corruption (failure to decode JSON, for example).
 
 Therefore, for normal operations, it is generally appropriate to use `try!`  for calls that are not expected to fail. Only use `try?` if you're sure that the failure can be overcome by checking the returned value for `nil`.
 Or, if you use diagnostic logging for detecting catastrophic failures in your app, or have some other reason to look for or respond to specific kinds of errors, the usual do/catch is recommended:
@@ -156,11 +156,15 @@ If for some specific reason you need to distinguish errors thrown from GarageSto
 
 ## Working with Objective-C
 
-See details in [WorkingWithObjectiveC.md](WorkingWithObjectiveC.md).
+If you are initially using Garage Storage with a code base primarily in Objective-C, you may want to use the Objective-C compatible APIs.
+
+See details in [WorkingWithObjectiveC](WorkingWithObjectiveC.md).
 
 ## Migrating from Objective-C to Swift
 
-See see details in [Migrating to Swift](MigratingToSwift.md).
+If you have been using Garage Storage with a mix of Objective-C and Swift code, you may want to migrate entirely to Swift.
+
+See details in [Migrating to Swift](MigratingToSwift.md).
 
 ## Conclusion
 

@@ -12,7 +12,6 @@ The `@objc` keyword plays a special role for the properties, in that Objective-C
 An object mapping specifies the properties on the object you wish to have parked (similar to `CodingKeys`). For example, I may have a Person object that looks like this:
 ```swift
 class Person : NSObject, MappableObject {
-
     @objc var name: String = ""
     @objc var ssn: String = ""
 }
@@ -43,16 +42,20 @@ Under the hood, the object's properties gets serialized to JSON, and the types o
 The Garage methods for parking, retrieving and deleting MappableObject objects are the same as for Swift Codable, with the suffix `Object` added:
 
 * The `MappableObject` equivalent to `park<T>(_)` and `parkAll<T>(_)` are `parkObject(_)` and `parkAllObjects(_)`.
-* The `MappableObject` equivalent to `retrieve<T>(_)` and `retrieveAll<T>(_) are `retrieveObject(_:identifier:)` and `retrieveAllObjects(_)`.
-* The `MappableObject` equivalent to `delete<T>(_)` and `deleteAll<T>(_) are `deleteObject(_)` and `deleteAllObjects(_)`.
+* The `MappableObject` equivalent to `retrieve<T>(_)` and `retrieveAll<T>(_)` are `retrieveObject(_:identifier:)` and `retrieveAllObjects(_)`.
+* The `MappableObject` equivalent to `delete<T>(_)` and `deleteAll<T>(_)` are `deleteObject(_)` and `deleteAllObjects(_)`.
 * The `MappableObject` equivalent to `retrieve<T>(withStatus:)` is `retrieveObjects(withStatus:)`.
 
-### Working with an identifier
+### Working with an identifier for top-level unique objects
 
-To specify the identifier, conform to `MappableObject` and provide an `ObjectMapping identifyingAttribute`.
+To specify the identifier, conform to `MappableObject` and assign the `ObjectMapping identifyingAttribute`.
 
 In the case of Objective-C, the MappableObject's JSON representation of the object) is used as its identifier, when an identifier is specified. A `MappableObject` without an `identifyingAttribute` will otherwise be anonymous (a dependent object of a root reference object, or an object in an array).
 
 ### Handling errors
 
 If an error is thrown, then return values, if any, will be `NULL` or `NO` (false) if the caller is in Objective-C. For example, retrieveObject will return NULL if the object is not found, along with an error indicating such.
+
+## Migrating from Objective-C to Swift
+
+Over time you may find yourself converting Objective-C-compatible types entirely to Swift. To make these new types more idiomatic in Swift, and to handle migration, please see [Migrating to Swift](MigratingToSwift.md).
