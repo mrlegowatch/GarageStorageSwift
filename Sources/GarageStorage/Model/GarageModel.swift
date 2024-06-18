@@ -45,5 +45,4 @@ struct GarageModel {
         garageModel.entities = [entity]
         return garageModel
     }
-    
 }

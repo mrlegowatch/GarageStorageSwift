@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 /// Protocol for providing a string id, to uniquely identify an instance of a reference Codable type.
 ///
 /// This protocol is compatible with Identifiable where ID == String.

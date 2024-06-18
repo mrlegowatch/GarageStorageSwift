@@ -25,7 +25,7 @@ public class ObjectMapping: NSObject {
         set {
             guard let value = newValue else { return }
             guard self.mappings[value] != nil else {
-                print("identifingAttribute is not in mappings. Check mappings, and ensure this is set after setting mappings.")
+                print("identifyingAttribute is not in mappings. Check mappings, and ensure this is set after setting mappings.")
                 return
             }
             _identifyingAttribute = newValue
