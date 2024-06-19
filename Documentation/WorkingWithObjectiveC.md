@@ -24,7 +24,7 @@ static var objectMapping: ObjectMapping {
     return mapping
 }
 ```
-Once you have set the properties to map, you should set the identifying attribute, if it is a top-level object (See note about *Identifying Attributes* below). This property represents a unique identifier for your object, and it must be a String. For example, in the `objectMapping` method, add this before the return statement:
+Once you have set the properties to map, you should set the `identifyingAttribute`, if it is a top-level object (See note about *Identifying Attributes* in [Getting Started](GettingStarted.md)). This property represents a unique identifier for your object, and it must be a String. For example, in the `objectMapping` method, add this before the return statement:
 
 ```swift
     mapping.identifyingAttribute = "ssn"
@@ -48,9 +48,7 @@ The Garage methods for parking, retrieving and deleting MappableObject objects a
 
 ### Working with an identifier for top-level unique objects
 
-To specify the identifier, conform to `MappableObject` and assign the `ObjectMapping identifyingAttribute`.
-
-In the case of Objective-C, the MappableObject's JSON representation of the object) is used as its identifier, when an identifier is specified. A `MappableObject` without an `identifyingAttribute` will otherwise be anonymous (a dependent object of a root reference object, or an object in an array).
+To specify the identifier, conform to `MappableObject` and assign the `ObjectMapping identifyingAttribute`. A `MappableObject` without an `identifyingAttribute` will otherwise be anonymous (a dependent object of a root reference object, or an object in an array). For more details, see *Identifying Attributes* in [Getting Started](GettingStarted.md).
 
 ### Handling errors
 
@@ -58,4 +56,4 @@ If an error is thrown, then return values, if any, will be `NULL` or `NO` (false
 
 ## Migrating from Objective-C to Swift
 
-Over time you may find yourself converting Objective-C-compatible types entirely to Swift. To make these new types more idiomatic in Swift, and to handle migration, please see [Migrating to Swift](MigratingToSwift.md).
+Over time you may desire to migrate all of your remaining Objective-C-compatible types entirely to Swift. To make these new types more idiomatic in Swift, and handle migration, please see [Migrating to Swift](MigratingToSwift.md).
