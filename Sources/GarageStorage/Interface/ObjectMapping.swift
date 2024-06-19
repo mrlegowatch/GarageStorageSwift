@@ -9,10 +9,14 @@
 import Foundation
 
 
-/// Provides mappings and optionally an identifying attribute for encoding and decoding an Objective-C MappableObject's properties.
-/// 
-/// Properties must be declared with the @objc keyword.
-/// Valid property types include: Int, Double, Bool, String, Date, Array, Dictionary, and other MappableObject types.
+/// Provides mappings, and optionally an identifying attribute, for encoding and decoding an Objective-C-compatible ``MappableObject``'s properties.
+///
+/// Properties to be stored must be declared with the `@objc` keyword.
+///
+/// Supported property types include:
+///  - Core types: `Int`, `Double`, `Bool`, `String`, `Date`
+///  - Container types: `Array`, `Dictionary`
+///  - Other ``MappableObject`` classes
 @objc(GSObjectMapping)
 public class ObjectMapping: NSObject {
     
@@ -38,21 +42,21 @@ public class ObjectMapping: NSObject {
         }
     }
     
-    /// Initializes a mapping with a given class.
+    /// Initializes a mapping for the specified class.
     ///
-    /// - parameter objectClass: A Mappable class
+    /// - parameter objectClass: A class conforming to ``MappableObject``.
     ///
-    /// - returns: An ObjectMapping
+    /// - returns: An ``ObjectMapping``.
     @objc(mappingForClass:)
     static public func mapping(for objectClass: AnyClass) -> ObjectMapping {
         return ObjectMapping(for: objectClass)
     }
     
-    /// Initializes a mapping with a given class.
+    /// Initializes a mapping for the specified class.
     ///
-    /// - parameter class: A mappable class
+    /// - parameter class: A class conforming to ``MappableObject``.
     ///
-    /// - returns: An ObjectMapping
+    /// - returns: An ``ObjectMapping``.
     ///
     public init(for objectClass: AnyClass) {
         self.classNameForMapping = NSStringFromClass(objectClass)
@@ -70,7 +74,9 @@ public class ObjectMapping: NSObject {
         addMappings(mappings)
     }
     
-    /// Adds mappings from a dictionary. The keys in the dictionary are the names of the properties to map on the object. The values are the JSON keys in the underlying GSCoreDataObject they map to.
+    /// Adds mappings from a dictionary. The keys in the dictionary are the names of the properties to map on the object. The values are the JSON keys in the underlying Core Data object they map to.
+    ///
+    /// This alternative method allows for mapping properties to different JSON keys.
     ///
     /// - parameter dictionary: A dictionary of mappings
     ///

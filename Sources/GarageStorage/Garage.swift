@@ -9,23 +9,13 @@
 import Foundation
 import CoreData
 
-/// If your application requires data encryption, this protocol provides the relevant hooks.
-@objc(GSDataEncryptionDelegate)
-public protocol DataEncryptionDelegate: NSObjectProtocol {
-    
-    /// This is called when the Core Data object's underlying data is about to be stored. Provide an implementation that encrypts the JSON data to a string.
-    @objc func encrypt(_ data: Data) throws -> String
-    
-    /// This is called when the Core Data object's data is about to be accessed. Provide an implementation that decrypts the string to JSON data.
-    @objc func decrypt(_ string: String) throws -> Data
-    
-}
-
 /// The main Garage Storage interface for parking and retrieving objects.
 ///
-/// The `Garage` is the main object that coordinates activity in Garage Storage. It's called a *Garage* because you can park pretty much anything in it, like, you know, your garage. The Garage handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the Garage, and *retrieve* them later. Any object going into or coming out of the Garage must conform to the `Codable` protocol, and either the `Hashable` or  `Mappable` protocol. For Objective-C compatibility, the `MappableObject` protocol may be used instead.
+/// The `Garage` is the main object that coordinates activity in Garage Storage. It's called a *Garage* because you can park pretty much anything in it, like, you know, a garage. The Garage handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the Garage, and *retrieve* them later.
+/// 
+/// Any object going into or coming out of the Garage must conform to the `Codable` protocol. Some objects may need to also conform to either the `Hashable` protocol for nested objects, or the ``Mappable`` protocol (which is `Codable` and `Identifiable where ID == String`) for uniquely identified top-level objects.
 ///
-/// Garage Storage stores a JSON representation of your objects in Core Data, as opposed to storing the objects themselves, as Core Data does. There are some implications to this (explained below), but the best part is that you can add whatever type of object you like to the Garage, whenever you like. You don't have to migrate data models or anything, just park whatever you want!
+/// For Objective-C compatibility, the ``MappableObject`` protocol may be used instead.
 @objc(GSGarage)
 public class Garage: NSObject {
     
@@ -33,13 +23,13 @@ public class Garage: NSObject {
     
     private let persistentContainer: NSPersistentContainer
 
-    /// An optional delegate for serializing/deserializing stored data.
+    /// An optional delegate for serializing/deserializing stored data. Specify this to add encryption to the stored data.
     @objc
     public weak var dataEncryptionDelegate: DataEncryptionDelegate?
 
-    /// Autosave is set to true by default.
+    /// Autosave is set to true by default, for every operation that causes a change to the underlying Core Data Managed Object Context.
     ///
-    /// When set to true, the garage will be saved after any operation that causes a change to the underlying Core Data Managed Object Context, including `park()`, `setSyncStatus()`, and `delete()`. When set to false, `save()` must be called instead, in order to persist those changes. You might want to set this to false to perform batch changes to many objects, to optimize performance.
+    /// When set to true, the garage will be saved after any operation that causes a change to the underlying Core Data Managed Object Context, including `park()`, `setSyncStatus()`, and `delete()`. When set to false, `save()` must be called instead, in order to persist those changes. You might want to set this to false to perform batch changes to many objects before saving them all, to optimize performance.
     @objc(autosaveEnabled)
     public var isAutosaveEnabled = true
     
@@ -67,9 +57,9 @@ public class Garage: NSObject {
         return description
     }
     
-    /// Creates a Garage with a default persistent store coordinator and object mapper.
+    /// Creates a Garage with a default persistent store coordinator.
     /// This convenience initializer will also load the persistent store.
-    /// - parameter garageName: The name of the garage without an extension, which will be used to create a store with the same name.
+    /// - parameter garageName: The name of the garage without an extension, which will be used to create a store with the same name, appending ".sqlite".
     public convenience init(named garageName: String) {
         let storeName = "\(garageName).sqlite"
         let description = Garage.makePersistentStoreDescription(storeName)
@@ -82,9 +72,10 @@ public class Garage: NSObject {
         }
     }
     
-    /// Creates a Garage with the specified persistent store descriptions and object mapper.
+    /// Creates a Garage with the specified persistent store descriptions.
+    /// This initializer will not immediately load the persistent stores.
     ///
-    /// Once the Garage has been initialized, call `loadPersistentStores(completionHandler:)` to instruct the Garage to load the persistent stores and complete the creation of the Core Data stack.
+    /// Once the Garage has been initialized, call ``loadPersistentStores(completionHandler:)`` to instruct the Garage to load the persistent stores and complete the creation of the Core Data stack.
     ///
     /// - parameter persistentStoreDescriptions: An array of `NSPersistentStoreDescription` to use in the Garage's Core Data stack.
     public init(with persistentStoreDescriptions: [NSPersistentStoreDescription]) {

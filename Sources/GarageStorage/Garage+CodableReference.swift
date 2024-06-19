@@ -1,5 +1,5 @@
 //
-//  Garage+Mappable.swift
+//  Garage+CodableReference.swift
 //  GarageStorage
 //
 //  Created by Brian Arnold on 10/7/19.
@@ -13,10 +13,11 @@ extension Encoder {
     var garage: Garage? { self.userInfo[Garage.userInfoKey] as? Garage }
 }
 
-// Explicit methods for encoding and decoding nested Mappable objects by reference.
+// This file contains extensions for encoding and decoding nested Codable and Mappable objects by reference.
 //
 // Mappable doesn't know whether an about-to-be-saved reference is for a
-// not-explicitly-parked object, so the garage is accessed via the super decoder
+// not-explicitly-parked object (plain Codable with a hashValue) or explicitly-parked object
+// (Mappable with an id), so the garage is accessed via the super decoder
 // to ensure that they are parked. Without this, references would fail to be retrieved.
 public extension KeyedEncodingContainer {
     

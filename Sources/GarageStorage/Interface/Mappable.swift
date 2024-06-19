@@ -8,9 +8,9 @@
 
 import Foundation
 
-/// Protocol for providing a string id, to uniquely identify an instance of a Codable type.
+/// Protocol for providing a string id, to uniquely identify an instance of a `Codable` type.
 ///
-/// This protocol is compatible with Identifiable where ID == String.
+/// This protocol is compatible with `Identifiable` where `ID == String`.
 public protocol Mappable: Codable /*, Identifiable where ID == String */ {
 
     var id: String { get }

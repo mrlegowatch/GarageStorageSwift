@@ -9,7 +9,7 @@
 import Foundation
 
 
-/// Optional protocol for managing the sync status of an Objective-C MappableObject.
+/// Optional protocol for managing the sync status of an Objective-C ``MappableObject``.
 @objc(GSSyncableObject)
 public protocol SyncableObject: NSObjectProtocol {
     

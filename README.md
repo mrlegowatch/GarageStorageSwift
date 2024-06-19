@@ -5,12 +5,10 @@ GarageStorage is designed to do two things:
 - Simplify Core Data persistence, to store any kind of object
 - Eliminate versioning Core Data data models, or the need to do xcdatamodel migrations
 
-It does this at the expense of speed and robustness. In GarageStorage, there is only one type of Core Data Entity, and each referenced object is mapped to an instance of this object. References between objects are maintained, so you do get *some* of the graph features of Core Data. This library has been used in production apps, and has substantial unit tests, so although it is not especially robust, it is *robust-ish*.
-
 ### What is a Garage?
-The `Garage` is the main object that coordinates activity in Garage Storage. It's called a *Garage* because you can park pretty much anything in it, like, you know, your garage. The Garage handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the Garage, and *retrieve* them later. Any object going into or coming out of the Garage must conform to the `Codable` protocol, and either the `Hashable` or  `Mappable` protocol.
+The `Garage` is the main object that coordinates activity in Garage Storage. It's called a *Garage* because you can park pretty much anything in it, like, you know, a garage. The Garage handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the Garage, and *retrieve* them later. 
 
-It's important to draw a distinction between how Garage Storage operates and how Core Data operates: Garage Storage stores a JSON representation of your objects in Core Data, as opposed to storing the objects themselves, as Core Data does. There are some implications to this (explained below), but the best part is that you can add whatever type of object you like to the Garage, whenever you like. You don't have to migrate data models or anything, just park whatever you want!
+Any object going into or coming out of the Garage must conform to the `Codable` protocol. You can add whatever type of object you like to the Garage, whenever you like. You don't have to migrate data models or anything, just park whatever you want!
 
 ## Installation
 
@@ -22,7 +20,7 @@ It's important to draw a distinction between how Garage Storage operates and how
 
 ## Getting Started
 
-"Super-easy, barely an inconvenience!" _(Screenwriter Guy, Pitch Meetings)_
+"Super-easy, barely an inconvenience!" _- Screenwriter Guy, Pitch Meetings_
 
 To get started, see: [Getting Started](Documentation/GettingStarted.md).
 

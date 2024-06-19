@@ -5,7 +5,7 @@ This document covers the historical context of how Garage Storage works with Obj
 It is not recommended that you start with Objective-C types in Garage Storage. If you are using Garage Storage primarily in Swift, and only require limited Objective-C compatibility with the data classes outside of how they are stored, you can skip this document.
 
 ### Objects requiring Objective-C compatibility
-Any Objective-C-compatible object that is involved in being parked in a Garage from Objective-C code must conform to `MappableObject`, instead of `Mappable` or `Codable`. The object class may be declared in Swift. It must additionally subclass from `NSObject` and implement the property getter `@objc static var objectMapping: ObjectMapping { get }`. 
+Any Objective-C-compatible object that is involved in being parked in a Garage from Objective-C code must conform to `MappableObject`, instead of `Mappable` or `Codable`. The object class may be declared in either Objective-C or Swift (the examples in this document will use Swift). It must additionally subclass from `NSObject` and implement the property getter `@objc static var objectMapping: ObjectMapping { get }`. 
 
 The `@objc` keyword plays a special role for the properties, in that Objective-C *Key-Value Coding* will be used to encode and decode them.
 

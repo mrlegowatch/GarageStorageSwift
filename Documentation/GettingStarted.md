@@ -1,7 +1,9 @@
 # Getting Started
 
 ### What is a Garage?
-The `Garage` is the main object that coordinates activity in Garage Storage. It's called a *Garage* because you can park pretty much anything in it, like, you know, your garage. The Garage handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the Garage, and *retrieve* them later. Any object going into or coming out of the Garage must conform to the `Codable` protocol, and either the `Hashable` or  `Mappable` protocol.
+The `Garage` is the main object that coordinates activity in Garage Storage. It's called a *Garage* because you can park pretty much anything in it, like, you know, a garage. The Garage handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the Garage, and *retrieve* them later.
+
+Any object going into or coming out of the Garage must conform to the `Codable` protocol. Some objects may need to also conform to either the `Hashable` protocol for nested objects, or the ``Mappable`` protocol (which is `Codable` and `Identifiable where ID == String`) for uniquely identified top-level objects.
 
 It's important to draw a distinction between how Garage Storage operates and how Core Data operates: Garage Storage stores a JSON representation of your objects in Core Data, as opposed to storing the objects themselves, as Core Data does. There are some implications to this (explained below), but the best part is that you can add whatever type of object you like to the Garage, whenever you like. You don't have to migrate data models or anything, just park whatever you want!
 
@@ -153,7 +155,7 @@ If for some specific reason you need to distinguish errors thrown from GarageSto
 
 If you are initially using Garage Storage with a code base primarily in Objective-C, you may want to use the Objective-C compatible APIs.
 
-See details in [WorkingWithObjectiveC](WorkingWithObjectiveC.md).
+See details in [Working With Objective-C](WorkingWithObjectiveC.md).
 
 ## Migrating from Objective-C to Swift
 

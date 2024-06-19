@@ -11,8 +11,12 @@ import Foundation
 
 /// Protocol for providing Objective-C Key-Value Coding mappings of properties for garage storage.
 ///
-/// Properties must be declared with the @objc keyword.
-/// Valid property types include: Int, Double, Bool, String, Date, Array, Dictionary, and other MappableObject types.
+/// Properties must be declared with the `@objc` keyword.
+/// 
+/// Supported property types include:
+///  - Core types: `Int`, `Double`, `Bool`, `String`, `Date`
+///  - Container types: `Array`, `Dictionary`
+///  - Other ``MappableObject`` classes
 @objc(GSMappableObject)
 public protocol MappableObject : NSObjectProtocol {
     
