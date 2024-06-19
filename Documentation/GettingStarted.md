@@ -32,7 +32,7 @@ In order to store this as a property of another object in GarageStorage, have it
 ```swift
 extension Address: Codable { }
 ```
-In order to *park* this as a root type, have it conform to either the `Hashable`, or  `Mappable` protocol. Since this is a simple type, `Hashable` is the way to go:
+In order to *park* this object, it must conform to either the `Hashable` or `Mappable` protocol. Since this is a simple type that will be embedded in another type, `Hashable` is the way to go:
 ```swift
 extension Address: Hashable { }
 ```
@@ -117,6 +117,7 @@ And most importantly, you can retrieve objects from the garage based on sync sta
 ```
 
 ### Saving The Store
+
 Parking, deleting, or modifying the sync status of objects may not, in and of themselves, persist their changes to disk. However, `isAutosaveEnabled` is set to `true` by default in a `Garage`. This means that any operation that modifies the garage will also trigger a save of the garage. If you don't want this enabled, then set `isAutosaveEnabled` to `false`, and then explicitly save the Garage by calling:
 ```swift
     garage.save()
