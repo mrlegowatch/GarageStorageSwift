@@ -27,7 +27,7 @@ jobs:
     - run: swift test --enable-code-coverage
     - uses: michaelhenry/swifty-code-coverage@v1.0.0
       with:
-        build-path: .build
+        build-path: DerivedData
         target: GarageStorageTests.xctest
         is-spm: true
         output: "coverage/lcov.info"
