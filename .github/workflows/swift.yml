@@ -21,13 +21,12 @@ jobs:
       run: swift build -v
   
   test:
-    container:
-      image: swift:5.7
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
     - run: swift test --enable-test-discovery --enable-code-coverage
-    - uses: mattpolzin/swift-codecov-action@0.7.5
+    - uses: michaelhenry/swifty-code-coverage@v1.0.0
       with:
-        MINIMUM_COVERAGE: 90
-        INCLUDE_TESTS: 'false'
+        build-path: .build
+        target: GarageStorageTests.xctest
+        is-spm: true
