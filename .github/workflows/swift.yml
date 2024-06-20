@@ -24,6 +24,8 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
     - run: swift test --enable-code-coverage
     - name: Generate lcov
       run: |
