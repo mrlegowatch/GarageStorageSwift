@@ -25,17 +25,25 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - run: swift test --enable-code-coverage
-    - uses: michaelhenry/swifty-code-coverage@v1.0.0
-      with:
-        build-path: DerivedData
-        target: GarageStorageTests.xctest
-        is-spm: true
-        output: "coverage/lcov.info"
-        output-artifact-name: "codecov-artifact"
-    - name: Upload to Codecov
+    - name: Generate lcov
       run: |
-        bash <(curl https://codecov.io/bash) -f "coverage/*.info"
-        shell: bash
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-         
+        BIN_PATH="$(swift build --show-bin-path)"
+        XCTEST_PATH="$(find ${BIN_PATH} -name '*.xctest')"
+        COV_BIN=$XCTEST_PATH
+
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            f="$(basename $XCTEST_PATH .xctest)"
+            COV_BIN="${COV_BIN}/Contents/MacOS/$f"
+        fi
+
+        /usr/local/opt/llvm/bin/llvm-cov export -format="lcov" \
+          "${COV_BIN}" \
+          -instr-profile=.build/debug/codecov/default.profdata \
+          -ignore-filename-regex=".build|Tests"\ > info.lcov
+    - name: Codecov
+      uses: codecov/codecov-action@v1.0.10
+      with:
+        name: Parsers
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./info.lcov
+        
