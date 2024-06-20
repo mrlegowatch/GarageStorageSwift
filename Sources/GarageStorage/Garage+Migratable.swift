@@ -3,10 +3,12 @@
 //  GarageStorage
 //
 //  Created by Brian Arnold on 10/14/19.
-//  Copyright © 2015-2020 Wellframe. All rights reserved.
+//  Copyright © 2015-2024 Wellframe. All rights reserved.
 //
 
 import Foundation
+
+// This file contains support for migrating MappableObject properties to Codable properties in-place.
 
 // Wrapper for migrating MappableObject "transformable date" dictionary to a Codable date.
 private struct __TransformableDateObjC: Decodable {
@@ -91,7 +93,7 @@ public extension KeyedDecodingContainer {
     }
 }
 
-// Wrapper for migrating an embedded "anonymous" MappableObject to extract its data.
+// Wrapper for migrating a nested "anonymous" MappableObject to extract its data.
 private struct __AnonymousObjC: Decodable {
     let data: String
     let syncStatus: Int?
@@ -103,9 +105,9 @@ private struct __AnonymousObjC: Decodable {
     }
 }
 
-/// Optional property wrapper for migrating previously nested MappableObjects with no identifyingAttribute to Swift Codable.
+/// An optional property wrapper for migrating a previously nested ``MappableObject`` with no ``ObjectMapping/identifyingAttribute`` to Swift `Codable` in-place.
 ///
-/// Use directly on a containing class's property, for an object that was previously of type MappableObject.
+/// Use directly on a containing class's property, for an object that was previously of type ``MappableObject``.
 @propertyWrapper
 public struct Migratable<Value: Decodable>: Decodable {
     public var wrappedValue: Value?
@@ -141,20 +143,20 @@ extension Migratable: Encodable where Value: Encodable {
 
 extension Garage {
 
-    /// Migrates all instances of one type to another type, on the assumption that the new type can decode the old type's data.
+    /// Migrates all instances of a class conforming to ``MappableObject`` to another type conforming to `Codable`, on the assumption that the new type can decode the old class's data.
     ///
     /// - parameter oldClass: The old class.
-    /// - parameter newClass: The new object class.
-    public func migrateAll<T: Codable>(from oldClass: AnyClass, to newClass: T.Type) throws {
+    /// - parameter newType: The new object type.
+    public func migrateAll<T: Codable>(from oldClass: AnyClass, to newType: T.Type) throws {
         let oldClassName = NSStringFromClass(oldClass)
-        try migrateAll(fromOldClassName: oldClassName, to: newClass)
+        try migrateAll(fromOldClassName: oldClassName, to: newType)
     }
     
-    /// Migrates all instances of one type to another type, on the assumption that the new type can decode the old type's data.
+    /// Migrates all instances of a class name (formerly conforming to ``MappableObject``) to another type conforming to `Codable`, on the assumption that the new type can decode the old class's data.
     ///
-    /// - parameter oldClass: The old class name.
-    /// - parameter newClass: The new object class.
-    public func migrateAll<T: Codable>(fromOldClassName oldClassName: String, to newClass: T.Type) throws {
+    /// - parameter oldClassName: The old class name.
+    /// - parameter newType: The new object type.
+    public func migrateAll<T: Codable>(fromOldClassName oldClassName: String, to newType: T.Type) throws {
         let coreDataObjects = fetchObjects(for: oldClassName, identifier: nil)
         guard coreDataObjects.count > 0 else { return }
        

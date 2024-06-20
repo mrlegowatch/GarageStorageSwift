@@ -3,7 +3,7 @@
 //  GarageStorage
 //
 //  Created by Brian Arnold on 10/18/19.
-//  Copyright © 2015-2020 Wellframe. All rights reserved.
+//  Copyright © 2015-2024 Wellframe. All rights reserved.
 //
 
 import CoreData
@@ -45,5 +45,4 @@ struct GarageModel {
         garageModel.entities = [entity]
         return garageModel
     }
-    
 }

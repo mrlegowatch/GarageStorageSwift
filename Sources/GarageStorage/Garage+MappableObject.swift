@@ -3,10 +3,12 @@
 //  GarageStorage
 //
 //  Created by Brian Arnold on 10/3/19.
-//  Copyright © 2015-2020 Wellframe. All rights reserved.
+//  Copyright © 2015-2024 Wellframe. All rights reserved.
 //
 
 import Foundation
+
+// This file contains the legacy Objective-C-compatible MappableObject support.
 
 // Property keys used in dictionaries.
 struct Property {
@@ -301,18 +303,22 @@ extension Garage {
         return retrieveCoreDataObject(for: type, identifier: identifier)
     }
 
-    /// Add an object to the Garage. Parking an object without an identifier set will go into the Garage as unidentified.
+    /// Adds an object conforming to ``MappableObject`` with an ``ObjectMapping/identifyingAttribute`` to the Garage.
     ///
-    /// - parameter object: An object that conforms to MappableObject
+    /// Parking an object without an ``ObjectMapping/identifyingAttribute`` specified will go into the Garage as unidentified.
+    ///
+    /// - parameter object: An object that conforms to ``MappableObject``.
     public func parkObject(_ object: MappableObject) throws {
         try makeCoreDataObject(from: object)
 
         autosave()
     }
 
-    /// Add an object to the Garage. Parking an object without an identifier set will go into the Garage as unidentified.
+    /// **Objective-C Only:** Adds an object conforming to ``MappableObject`` with an ``identifyingAttribute`` to the Garage.
     ///
-    /// - parameter object: An object that conforms to GSMappableObject
+    /// Parking an object without an ``identifyingAttribute`` specified will go into the Garage as unidentified.
+    ///
+    /// - parameter object: An object that conforms to ``MappableObject``
     @objc(parkObjectInGarage:error:)
     public func __parkObjectObjC(_ object: MappableObject?) throws {
         guard let object = object else {
@@ -322,9 +328,11 @@ extension Garage {
         try parkObject(object)
     }
 
-    /// Adds an array of objects to the garage. Parking an object without an identifier set will go into the Garage as unidentified.
+    /// Adds an array of objects conforming to ``MappableObject`` to the Garage.
     ///
-    /// - parameter objects: An array of objects, all of which must conform to MappableObject.
+    /// An ``ObjectMapping/identifyingAttribute`` is not required to be specified for these objects.
+    ///
+    /// - parameter objects: An array of objects conforming to ``MappableObject``.
     @objc(parkObjectsInGarage:error:)
     public func parkObjects(_ objects: [MappableObject]) throws {
         for object in objects {
@@ -344,22 +352,22 @@ extension Garage {
         return try makeMappableObject(from: coreDataObject)
     }
 
-    /// Fetches an object of a given class with a given identifier from the Garage.
+    /// Retrieves an object of the specified class conforming to ``MappableObject`` with the specified identifier from the Garage.
     ///
-    /// - parameter objectClass: The class of the object to retrieve. This class must conform to MappableObject.
-    /// - parameter identifier: The identifier of the object to retrieve. This is the identifier specified by that object's mapping.
+    /// - parameter objectClass: The class of the object to retrieve. This class must conform to ``MappableObject``.
+    /// - parameter identifier: The identifier of the object to retrieve. This should match the value of the ``ObjectMapping/identifyingAttribute`` specified by the object's mapping.
     ///
-    /// - returns: An object conforming to the specified class, or nil if it was not found.
+    /// - returns: An object of class `T`, or nil if it was not found.
     public func retrieveObject<T: MappableObject>(_ objectClass: T.Type, identifier: String) throws -> T? {
         return try retrieveMappableObject(objectClass.self, identifier: identifier) as? T
     }
 
-    /// Fetches an object of a given class with a given identifier from the Garage.
+    /// **Objective-C Only:** Retrieves an object of the specified class conforming to ``MappableObject`` with the specified identifier from the Garage.
     ///
     /// - parameter objectClass: The class of the object to retrieve. This class must conform to GSMappableObject
-    /// - parameter identifier: The identifier of the object to retrieve. This is the identifier specified by that object's mapping.
+    /// - parameter identifier: The identifier of the object to retrieve. This should match the value of the ``ObjectMapping/identifyingAttribute`` specified by the object's mapping.
     ///
-    /// - returns: An object conforming to GSMappableObject.
+    /// - returns: An object of the specified class.
     @objc(retrieveObjectOfClass:identifier:error:)
     public func __retrieveObjectObjC(_ objectClass: AnyClass, identifier: String) throws -> Any {
         guard let object = try retrieveMappableObject(objectClass, identifier: identifier) else {
@@ -386,20 +394,20 @@ extension Garage {
         return try makeMappableObjects(from: coreDataObjects)
     }
 
-    /// Fetches all objects of a given class from the Garage.
+    /// Retrieves all objects of the specified class conforming to ``MappableObject`` from the Garage.
     ///
-    /// - parameter objectClass: The class of the objects to retrieve
+    /// - parameter objectClass: The class of the objects to retrieve.
     ///
-    /// - returns: An array of objects, all of which conform to the specified class. If no objects are found, an empty array is returned.
+    /// - returns: An array of objects of class `objectClass`. If no objects are found, an empty array is returned.
     public func retrieveAllObjects<T: MappableObject>(_ objectClass: T.Type) throws -> [T] {
         return try retrieveAllMappableObjects(objectClass.self) as!  [T]
     }
 
-    /// Fetches all objects of a given class from the Garage.
+    /// **Objective-C Only:** Retrieves all objects of the specified class conforming to ``MappableObject`` from the Garage.
     ///
-    /// - parameter objectClass: The class of the objects to retrieve
+    /// - parameter objectClass: The class of the objects to retrieve.
     ///
-    /// - returns: An array of objects, all of which conform to MappableObject. If no objects are found, an empty array is returned.
+    /// - returns: An array of objects of class `objectClass`. If no objects are found, an empty array is returned.
     @objc(retrieveAllObjectsOfClass:error:)
     public func __retrieveAllObjectsObjC(_ objectClass: AnyClass) throws -> [Any] {
         return try retrieveAllMappableObjects(objectClass)
@@ -412,10 +420,10 @@ extension Garage {
         coreDataObject.syncStatus = syncStatus
     }
 
-    /// Sets the sync status for a given MappableObject
+    /// Sets the sync status for the specified object conforming to ``MappableObject``.
     ///
-    /// - parameter syncStatus: The SyncStatus of the object
-    /// - parameter object: A MappableObject
+    /// - parameter syncStatus: The ``SyncStatus`` of the object.
+    /// - parameter object: An object conforming to ``MappableObject``.
     ///
     /// - throws: if not successful.
     @objc(setSyncStatus:forObject:error:)
@@ -425,10 +433,10 @@ extension Garage {
         autosave()
     }
 
-    /// Sets the sync status for an array of MappableObjects
+    /// Sets the sync status for an array of objects conforming to ``MappableObject``.
     ///
-    /// - parameter syncStatus: The SyncStatus of the objects
-    /// - parameter objects: An array of MappableObjects
+    /// - parameter syncStatus: The SyncStatus of the objects.
+    /// - parameter objects: An array of objects conforming to ``MappableObject``.
     ///
     /// - throws: true if successful (syncStatus was set on all), false if not. Note: Even if this returns false, there still could be objects with their syncStatus was set successfully. A false response simply indicates a minimum of 1 failure.
     @objc(setSyncStatus:forObjects:error:)
@@ -440,21 +448,21 @@ extension Garage {
         autosave()
     }
     
-    /// Returns the sync status for an object.
+    /// Returns the sync status for an object conforming to ``MappableObject``.
     ///
-    /// - parameter object: A MappableObject
+    /// - parameter object: An object conforming to ``MappableObject``.
     ///
-    /// - returns: The Sync Status
+    /// - returns: The ``SyncStatus``.
     public func syncStatus(for object: MappableObject) throws -> SyncStatus {
         let coreDataObject = try fetchCoreDataObject(for: object)
         return coreDataObject.syncStatus
     }
 
-    /// Returns all the MappableObjects that have a given sync status
+    /// Returns all the objects conforming to``MappableObject`` that have the specified sync status.
     ///
-    /// - parameter syncStatus: The Sync Status
+    /// - parameter syncStatus: The ``SyncStatus``.
     ///
-    /// - returns: An array of MappableObjects. If no objects are found, an empty array is returned.
+    /// - returns: An array of objects with the specified `syncStatus`. If no objects are found, an empty array is returned.
     @objc(retrieveObjectsWithSyncStatus:error:)
     public func retrieveObjects(withStatus syncStatus: SyncStatus) throws -> [MappableObject] {
         let coreDataObjects = try fetchObjects(with: syncStatus, type: nil)
@@ -462,12 +470,12 @@ extension Garage {
         return try makeMappableObjects(from: coreDataObjects)
     }
     
-    /// Returns all the MappableObjects of a given class that have a given sync status
+    /// Returns all the objects conforming to ``MappableObject`` of the specified class that have the specified sync status.
     ///
-    /// - parameter syncStatus: The Sync Status
-    /// - parameter objectClass: The Class of the MappableObjects
+    /// - parameter syncStatus: The ``SyncStatus``.
+    /// - parameter objectClass: The class of the ``MappableObject``.
     ///
-    /// - returns: An array of MappableObjects. If no objects are found, an empty array is returned.
+    /// - returns: An array of objects with the specified `syncStatus`. If no objects are found, an empty array is returned.
     @objc(retrieveObjectsWithSyncStatus:ofClass:error:)
     public func retrieveObjects(withStatus syncStatus: SyncStatus, ofClass objectClass: AnyClass) throws -> [MappableObject] {
         let className = NSStringFromClass(objectClass)
@@ -478,18 +486,20 @@ extension Garage {
 
     // MARK: - Deleting
        
-    /// Deletes an object from the Garage. Note that deleting an object will only delete that specific object, and not any of its member variables. While parking an object into the garage is recursive, and member variables will be parked, deletion is not. Therefore, to remove an object's member variables from the Garage, make sure to remove them individually first.
+    /// Deletes an object conforming to ``MappableObject`` from the Garage.
     ///
-    /// - parameter object:    An object conforming to MappableObject
+    /// Note that deleting an object will only delete that specific object, and not any member variables that reference other top-level objects (those with an ``ObjectMapping/identifyingAttribute``). While parking an object into the Garage is recursive, and member variables will be parked, deletion is not. Therefore, to remove an object's member variables from the Garage, make sure to remove them individually first.
+    ///
+    /// - parameter object:    An object conforming to ``MappableObject``
     @objc(deleteObjectFromGarage:error:)
     public func deleteObject(_ object: MappableObject) throws {
         let coreDataObject = try fetchCoreDataObject(for: object)
         try delete(coreDataObject)
     }
 
-    /// Deletes all objects of a given type from the Garage
+    /// Deletes all objects of the specified class conforming to ``MappableObject`` from the Garage.
     ///
-    /// - parameter objectClass: An object class conforming to MappableObject
+    /// - parameter objectClass: An object class conforming to ``MappableObject``.
     @objc(deleteAllObjectsFromGarageOfClass:)
     public func deleteAllObjects(_ objectClass: AnyClass) {
         let className = NSStringFromClass(objectClass)
