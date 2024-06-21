@@ -372,6 +372,7 @@ extension Garage {
     public func __retrieveObjectObjC(_ objectClass: AnyClass, identifier: String) throws -> Any {
         guard let object = try retrieveMappableObject(objectClass, identifier: identifier) else {
             // This "throws" an error in order for the return value to be nil in Objective-C.
+            let className = NSStringFromClass(objectClass)
             throw Garage.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
         }
         return object
