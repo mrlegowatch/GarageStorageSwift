@@ -18,9 +18,9 @@ If you wish to have multiple Garage stores, or add configuration options to your
 
 ### Creating an object that can be stored in a Garage
 
-Any Swift type that is involved in being parked in a Garage must conform to `Codable`. The Swift compiler will take care of synthesizing of `CodingKeys`, `init(from:)` and `encode(to:)` methods, or alternatively, you can specify them manually, as you might for any `Codable` type.
+Any Swift type that is involved in being parked in a Garage must conform to `Codable`. The Swift compiler will take care of synthesizing of `CodingKeys`, `init(from:)` and `encode(to:)` methods; alternatively, you can specify them manually, as you might for any `Codable` type.
 
-For example, given a simple struct:
+For example, let's work with the following data object declaration:
 ```swift
 struct Address {
     var street: String
@@ -28,15 +28,24 @@ struct Address {
     var zip: String
 }
 ```
-In order to store this as a property of another object in GarageStorage, have it conform to Codable:
+In order to store this in GarageStorage, it must conform to Codable:
 ```swift
 extension Address: Codable { }
+
 ```
-In order to *park* this object, it must conform to either the `Hashable` or `Mappable` protocol. Since this is a simple type that will be embedded in another type, `Hashable` is the way to go:
+If this type is treated as a *value type* embedded in another object, then no other work is required. However, in order to *park* this object as a top-level object (that is, as an element of a top-level array, or with a unique identifier), it must additionally conform to the either the `Hashable` protocol, or instead conform to the `Mappable` protocol, which combines `Codable` conformance with a `String` ID property (see next section). 
+
+If many instances of the same value type with the same value are being stored (e.g., multiple objects embedding the exact same `Address`), then specifying `Hashable` conformance will help reduce the overall storage footprint, by storing the instance only once. In this example, since the properties are all `Hashable`, the type may simply be declared to also have `Hashable` conformance:
 ```swift
 extension Address: Hashable { }
 ```
-Reference types, such as classes, that have a unique *identity*, should conform to `Mappable`, and are usually root objects. This protocol conforms to `Codable` and is compatible with conforming to `Identifiable` where `ID == String`. For example:
+Using `Hashable` ensures that only one instance is stored in the Garage, thereby reducing the overall storage footprint.
+
+### Creating a top-level object
+
+As indicated in the previous section, elements of a top-level array need only conform to `Hashable`. They may be either value or reference types.
+
+Standalone top-level objects—that is, root objects that are parked directly using `park()`—require being uniquely identified in the Garage, and are often reference types, such as classes. This is supported through the `Mappable` protocol, which combines `Codable` conformance with an `String` ID property. For example:
 
 ```swift
 class Person: Mappable {
@@ -53,12 +62,14 @@ class Person: Mappable {
 }
 ```
 
+Note that in the above example, another property, name, is mapped to the id property, and the id property itself is synthesized (i.e., not stored directly with the object). In general, this is how you would map an existing unique identifier of any type (such as from a server or remote storage), to the one required for the Garage.
+
 ### Parking Objects
-Parking an object puts a snapshot of that object into the Garage. As mentioned, this is different from pure Core Data, where changes to your `NSManagedObjects` are directly reflected in the managed object context. With GarageStorage, since you're parking a snapshot, *you will need to park that object any time you want changes you've made to it to be reflected/persisted.* You can park the same object multiple times, which will update the existing object of that same type and identifier. To park a `Mappable` object in the garage, call:
+Parking an object puts a snapshot of that object into the Garage. As mentioned earlier, this is different from pure Core Data, where changes to your `NSManagedObjects` are directly reflected in the managed object context. With GarageStorage, since you're parking a snapshot, *you will need to park that object any time you want changes you've made to it to be reflected/persisted.* You can park the same object multiple times, which will update the existing object of that same type and identifier. To park a `Mappable` object in the garage, call:
 ```swift
     try garage.park(myPerson)
 ```
-You may also park an array of objects in the garage (assuming all are `Mappable` and of the same type):
+You may also park an array of objects in the garage (assuming all are `Codable` and `Hashable` and of the same type):
 ```swift
     try garage.parkAll([myBrother, mySister, myMom, myDad])
 ```
@@ -66,7 +77,7 @@ You may also park an array of objects in the garage (assuming all are `Mappable`
 ### Retrieving Objects
 To retrieve a specific object from the garage, you must specify its `type` and its `identifier`.
 ```swift
-    let person = try garage.retrieve(Person.self, identifier: "123-45-6789")
+    let person = try garage.retrieve(Person.self, identifier: "Joan Smith")
 ```
 You can also retrieve all objects for a given type:
 ```swift
@@ -82,13 +93,13 @@ To delete all objects of a given type, use:
 ```swift
     garage.deleteAll(Person.self)
 ```
-You can also delete all the objects from the Garage:
+You can also delete all objects from the Garage:
 ```swift
     garage.deleteAllObjects()
 ```
 
 ### Sync Status
-If you want to track the sync status of an object (with respect to say, a web service), you can implement the `Syncable` protocol, which requires that your object has a sync status property:
+If you want to track the sync status of an object with respect to say, a web service, you can additionally implement the `Syncable` protocol, which requires that your object has a sync status property:
 ```swift
     var syncStatus: SyncStatus = .undetermined
 ```
@@ -116,6 +127,8 @@ And most importantly, you can retrieve objects from the garage based on sync sta
     let notSynced: [Person] = try garage.retrieveAll(withStatus: .notSynced)
 ```
 
+The purpose of using Garage functions to get and set sync status is so that the Garage can properly manage the underlying Core Data objects. If you were to directly modify the sync status property of a `Mappable` object, the underlying Core Data object would not be updated in the Garage.
+
 ### Saving The Store
 
 Parking, deleting, or modifying the sync status of objects may not, in and of themselves, persist their changes to disk. However, `isAutosaveEnabled` is set to `true` by default in a `Garage`. This means that any operation that modifies the garage will also trigger a save of the garage. If you don't want this enabled, then set `isAutosaveEnabled` to `false`, and then explicitly save the Garage by calling:
@@ -126,19 +139,19 @@ Parking, deleting, or modifying the sync status of objects may not, in and of th
 ### A Note about Identifying Objects
 It's worth going into a bit of detail about how *identifying* objects work so you can best leverage (read: account for the quirks of) Garage Storage. Any object with an identifying attribute will be stored as its own separate object in the Garage, and each *reference* will point back to that object. This is great if you have a bunch of objects that reference each other, as the graph is properly maintained in the garage, so a change to one object will be "seen" by the other objects pointing to it. This also enables you to *retrieve* any top-level object by its identifier.
 
-Alternatively, you don't have to set an identifying attribute on your object. If you do this on a top level object (i.e. one that you call `park()` on directly), it must conform to `Hashable`. If you park unidentified *Object A*, then change one of its properties, and park *Object A* again, you'll now have *two copies* of *Object A* in the Garage, as its JSON mapping, and hence identifier, would have changed. If *Object A* had had an identifier, then *Object A* would have just been updated when it was parked the second time. It's considered best practice for top-level objects to have an identifying attribute (so, use `Mappable` in Swift, which requires an identifier).
+Alternatively, you don't have to set an identifying attribute on your object. If you don't conform a top level object to `Mappable` (i.e. one that you call `park()` on directly), it must instead conform to `Hashable`. If you park unidentified *Object A*, then change one of its properties, and park *Object A* again, you'll now have *two copies* of *Object A* in the Garage, as its JSON mapping, and hence identifier, would have changed. If *Object A* had had an identifier, then *Object A* would have just been updated when it was parked the second time. It's considered best practice for top-level objects to have an identifying attribute (so, use `Mappable` in Swift, which requires an identifier, or `Hashable` if it's stored as part of an array using `parkAll()`).
 
-However, if the object is a *property* of a top-level object, you may want to leave it unidentified (or *anonymous*), especially if it doesn't have an attribute that's logically its identifier. An anonymous object is serialized as in-line JSON, instead of having a separate underlying core data object, as an identified object would. This means you won't be able to retrieve anonymous sub-objects by type directly. To make an object anonymous, it only needs to conform to `Codable`. 
+However, if the object is an embedded *property* of a top-level object, you may want to leave it unidentified (or *anonymous*), especially if it doesn't have an attribute that's logically its identifier. An anonymous object is serialized as in-line JSON, instead of having a separate underlying core data object, as an identified object would. This means you won't be able to retrieve anonymous sub-objects by type directly. To make an object anonymous, it only needs to conform to `Codable`. 
 
-The primary advantages of unidentified objects are twofold: First, you don't have to arbitrarily pick an identifier if your object doesn't naturally have one. Second, there's an underlying difference in how deletion is handled. When you delete an object from the Garage, only the top level `Mappable` is deleted. If it points to other `Mappable` objects, those are not deleted. Garage Storage doesn't monitor retain counts on objects, so for safety, only the object specified is removed. However, since unidentified objects are part of the top level object's JSON, and are not separate underlying objects, they will be removed. It's considered best practice for sub objects to be unidentified unless there is a compelling reason otherwise.
+The primary advantages of unidentified objects are twofold: First, you don't have to arbitrarily pick an identifier if your object doesn't naturally have one. Second, there's an underlying difference in how deletion is handled. When you delete an object from the Garage, only the top level `Mappable` is deleted. If it points to other `Mappable` objects, those are not deleted. Garage Storage doesn't monitor retain counts on objects, so for safety, only the object specified is removed. However, since unidentified objects are part of the top level object's JSON, and are not separate underlying objects, they will be removed. It's considered best practice for embedded objects to be unidentified, unless there is a compelling reason otherwise, such as to reduce overall storage footprint.
 
 ### Handling errors
 
-Most of the public APIs in GarageStorage may throw an error. The error may come from Core Data itself, or from GarageStorage detecting a problem. The error will always be of type `NSError`.
+Most of the public APIs in GarageStorage may throw an error. The error may come from Core Data itself, from encoding or decoding detecting a problem, or from GarageStorage detecting a problem.
 
 Since normal code flow should never rely on errors being thrown, the only kinds of errors GarageStorage throws are programmer errors, or memory or data corruption (failure to decode JSON, for example).
 
-Therefore, for normal operations, it is generally appropriate to use `try!`  for calls that are not expected to fail. Only use `try?` if you're sure that the failure can be overcome by checking the returned value for `nil`.
+Therefore, for normal operations, it is generally appropriate to use `try!` for calls that are not expected to fail. Only use `try?` if you're sure that the failure can be overcome by checking the returned value for `nil`.
 Or, if you use diagnostic logging for detecting catastrophic failures in your app, or have some other reason to look for or respond to specific kinds of errors, the usual do/catch is recommended:
 
 ```swift

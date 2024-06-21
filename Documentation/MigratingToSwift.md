@@ -42,7 +42,7 @@ An Objective-C declaration might look like this:
 NS_SWIFT_NAME(Item)
 @interface WFItem : NSObject <MappableObject>
 
-@property (nonatomic, assign) NSInteger itemID;
+@property (nonatomic, assign) NSString itemID;
 @property (nonatomic, strong) NSString *label;
 @property (nonatomic, strong) NSDate *dateCreated;
 
@@ -67,11 +67,11 @@ For Swift, you might implement a slightly more idiomatic Swift version like this
 
 ```swift
 public class Item: Codable, Identifiable {
-    public private(set) var id: Int
+    public private(set) var id: String
     public private(set) var label: String
     public private(set) var dateCreated: Date
     
-    init(id: Int, label: String, dateCreated: Date) {
+    init(id: String, label: String, dateCreated: Date) {
         self.id = id
         self.label = label
         self.dateCreated = dateCreated
@@ -79,12 +79,12 @@ public class Item: Codable, Identifiable {
 }
 ```
 
-To support migration to the new type, you might prefer to provide an in-place converted version of the old type, instead of leaving the old type around, like this:
+To support migration to the new type, you might prefer to provide an in-place converted version of the old type in Swift, instead of leaving the old type around, like this:
 
 ```swift
 @objc(WFItem)
 class LegacyObjCItem: NSObject, MappableObject {
-    @objc var itemID: Int = 0
+    @objc var itemID: String = ""
     @objc var label: String = ""
     @objc var dateCreated: Date = Date()
     
@@ -99,8 +99,8 @@ class LegacyObjCItem: NSObject, MappableObject {
 ```
 
 Notes:
- * The old type is named `LegacyObjCItem` so that the new Swift class can use the same Swift class name as the old class (e.g., `Item`, if desired, as this example shows), and is declared as `@objc(WFItem)` so that its Objective-C class name matches the old class name that will be found in storage.
- * An override of `init()` may be required to ensure that the Garage can create instances of this class.
+ * The old type is named `LegacyObjCItem` so that the new Swift class can use the same Swift class name as the old class (e.g., `Item`, as this example shows), and is declared as `@objc(WFItem)` so that its Objective-C class name still matches the old class name that will be found in storage.
+ * An override of `init()` may be required to ensure that Garage Storage can create instances of this class.
  * All properties must have the `@objc` prefix to ensure that the Garage can access them using Key-Value Coding.
 
 You can then implement a migration function that converts the old type to the new type, like this:
@@ -113,7 +113,7 @@ extension Garage {
         guard !oldItems.isEmpty else { return }
      
         let newItems = oldItems.map { oldItem in
-            Item(id: oldItem.ItemID, title: oldItem.title, dateCreated: oldItem.dateCreated)
+            Item(id: oldItem.itemID, title: oldItem.title, dateCreated: oldItem.dateCreated)
         }
         try parkAll(newItems)
         deleteAllObjects(LegacyObjCItem.self)
@@ -125,9 +125,9 @@ Notes:
  * The `retrieveAllObjects` is passed in `LegacyObjCItem.self`, but because Garage Storage is actually using the Objective-C class name `WFItem` under the hood, the existing stored data will be retrieved into instances of the `LegacyObjCItem` type.
  * The init method supplied in the new Item type is used to create new instances of the Item type.
 
-### Migrating SyncableObject may require skipping its syncStatus property
+### Migrating SyncableObject in-place may require skipping its syncStatus property
 
-If you are migrating a type that was previously conforming to the `SyncableObject` protocol, chances are good that its `syncStatus` property was not being included in `ObjectMapping`'s `mappings`. If that's the case, the migrated Swift type must also skip this property (if you are converting in-place), by adding CodingKeys that only include the former `ObjectMapping`'s `mappings`, at least during the time of migration.
+If you are migrating a type in-place that was previously conforming to the `SyncableObject` protocol, chances are good that its `syncStatus` property was not being included in `ObjectMapping`'s `mappings`. If that's the case, the migrated Swift type must skip this property, by adding CodingKeys that only include the former `ObjectMapping`'s `mappings`, at least during the time of migration.
 
 ### Keep migration code in place only for a specified period of time
 
