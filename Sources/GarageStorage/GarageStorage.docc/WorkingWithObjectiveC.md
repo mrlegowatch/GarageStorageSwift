@@ -58,7 +58,7 @@ class Item: NSObject, MappableObject {
 ```
 The `@objc` keyword plays a special role for the properties, in that Objective-C *Key-Value Coding* will be used to encode and decode them. The `ObjectMapping` specifies the properties on the object you wish to have parked (similar to `CodingKeys`). The `init` override ensures that it can be found and instantiated by Garage Storage at runtime.
 
-Once you have set the properties to map, if it is a top-level object, you should set the `identifyingAttribute` (See note about *Identifying Attributes* in [Getting Started](GettingStarted.md)). This property represents a unique identifier for your object, and it must be a String. It must also be specified in the mappings.
+Once you have set the properties to map, if it is a top-level object, you should set the `identifyingAttribute` (See note about *Identifying Attributes* in <doc:GettingStarted>). This property represents a unique identifier for your object, and it must be a String. It must also be specified in the mappings.
 
 ```swift
     public class var objectMapping: ObjectMapping {

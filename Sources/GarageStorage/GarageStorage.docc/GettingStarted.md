@@ -185,13 +185,13 @@ If for some specific reason you need to distinguish errors thrown from GarageSto
 
 If you are initially using Garage Storage with a code base primarily in Objective-C, you may want to include the Objective-C compatible APIs.
 
-See details in [Working With Objective-C](WorkingWithObjectiveC.md).
+See details in <doc:WorkingWithObjectiveC>.
 
 ## Migrating from Objective-C to Swift
 
 If you have been using Garage Storage with a mix of Objective-C and Swift code, you may want to migrate entirely to Swift.
 
-See details in [Migrating to Swift](MigratingToSwift.md).
+See details in <doc:MigratingToSwift>.
 
 ## Conclusion
 
