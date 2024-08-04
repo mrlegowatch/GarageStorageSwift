@@ -1,19 +1,23 @@
 # Working with Objective-C
 
-This document covers the historical context of how Garage Storage works with Objective-C, from before Swift compatibility was added. It is primarily intended for code that originated in Objective-C, such as a data class declared in a header and source file, or for working with a Garage and its stored objects directly from Objective-C code.
+GarageStorage provides optional support for working with a `Garage` from Objective-C, and parking and retrieving Objective-C data classes.
 
-It is not recommended that you start with Objective-C types in Garage Storage. If you are using Garage Storage primarily in Swift, and only require limited Objective-C compatibility with the data classes outside of how they are stored, you can skip this document.
+@Metadata {
+    @PageColor(blue)
+}
+
+It is not recommended that you start with Objective-C types in Garage Storage. If you are using Garage Storage primarily in Swift, and only require limited Objective-C compatibility with your data classes, separate from how they are stored, then you can skip this article.
 
 ### Objects requiring Objective-C compatibility
-Any Objective-C-compatible object that is involved in being parked in a Garage from Objective-C code must conform to `MappableObject`, instead of `Mappable` or `Codable`. It must additionally subclass from `NSObject` and implement the `ObjectMapping` property getter. Garage Storage types in Objective-C are prefixed with "GS".
+Any Objective-C-compatible object that is involved in being parked in a Garage from Objective-C code must conform to `MappableObject`, instead of `Mappable`, `Hashable`, or `Codable`. It must additionally subclass from `NSObject` and implement the `ObjectMapping` property getter. Garage Storage types in Objective-C are prefixed with "GS".
 
 For example, in Objective-C:
 
 ```objective-c
 NS_SWIFT_NAME(Item)
-@interface WFItem : NSObject <GSMappableObject>
+@interface MCItem : NSObject <GSMappableObject>
 
-@property (nonatomic, assign) NSString itemID;
+@property (nonatomic, assign) NSString *itemID;
 @property (nonatomic, strong) NSString *label;
 @property (nonatomic, strong) NSDate *dateCreated;
 
@@ -23,7 +27,7 @@ NS_SWIFT_NAME(Item)
 The implementation might look like this:
 
 ```objective-c
-@implementation(WFItem)
+@implementation(MCItem)
 
 - (GSObjectMapping *)objectMapping {
     GSObjectMapping *mapping = [GSObjectMapping mappingForClass:[self class]];
@@ -34,10 +38,10 @@ The implementation might look like this:
 @end
 ```
 
-It's also possible to declare the same class in Swift, like this:
+It's also possible to declare the same class in Swift with Objective-C compatibility, like this:
 
 ```swift
-@objc(WFItem)
+@objc(MCItem)
 class Item: NSObject, MappableObject {
     @objc var itemID: String = ""
     @objc var label: String = ""
@@ -65,26 +69,26 @@ Once you have set the properties to map, if it is a top-level object, you should
     }
 ```
 
-Under the hood, the object's properties gets serialized to JSON, and the types of properties supported in Objective-C are limited, so don't try to park any tricky properties, without first wrapping them in MappableObject. The types supported include:
+Under the hood, the object's properties gets serialized to JSON, and the types of properties supported in Objective-C are limited, so don't try to park any tricky properties, without first wrapping them in a `MappableObject`. The types supported include:
 * Strings (`NSString`)
 * Numbers (both `NSNumber` and associated primitives such as `int`, `double`, and `bool`)
 * Dates (`NSDate`)
-* Dictionaries (`NSDictionary`) where keys are Strings, and values are among the supported types
+* Dictionaries (`NSDictionary`) where keys are NSStrings, and values are among the supported types
 * Arrays (`NSArray`) of the supported types
-* Objects conforming to `MappableObject`
+* Objects conforming to `GSMappableObject`
 
 ### Parking, Retrieving, and Deleting Objects
 
 The Garage methods for parking, retrieving and deleting MappableObject objects are the same as for Swift Codable, with the suffix `Object` added:
 
-* The `MappableObject` equivalent to `park<T>(_)` and `parkAll<T>(_)` are `parkObject(_)` and `parkAllObjects(_)`.
-* The `MappableObject` equivalent to `retrieve<T>(_)` and `retrieveAll<T>(_)` are `retrieveObject(_:identifier:)` and `retrieveAllObjects(_)`.
-* The `MappableObject` equivalent to `delete<T>(_)` and `deleteAll<T>(_)` are `deleteObject(_)` and `deleteAllObjects(_)`.
-* The `MappableObject` equivalent to `retrieve<T>(withStatus:)` is `retrieveObjects(withStatus:)`.
+* `parkObject(_)` and `parkAllObjects(_)`
+* `retrieveObject(_:identifier:)` and `retrieveAllObjects(_)`
+* `deleteObject(_)` and `deleteAllObjects(_)`
+* `retrieveObjects(withStatus:)`
 
 ### Working with an identifier for top-level unique objects
 
-To specify the identifier, conform to `MappableObject` and assign the `ObjectMapping identifyingAttribute`. A `MappableObject` without an `identifyingAttribute` will otherwise be anonymous (a dependent object of a root reference object, or an object in an array). For more details, see *Identifying Attributes* in [Getting Started](GettingStarted.md).
+To specify the identifier, conform to `MappableObject` and assign the `ObjectMapping identifyingAttribute`. A `MappableObject` without an ``identifyingAttribute`` will otherwise be anonymous (an embedded object in a top-level object, or an object in an array). For more details, see *Identifying Attributes* in <doc:GettingStarted>.
 
 ### Handling errors
 
@@ -92,4 +96,4 @@ If an error is thrown, then return values, if any, will be `NULL` or `NO` (false
 
 ## Migrating from Objective-C to Swift
 
-Over time you may desire to migrate all of your remaining Objective-C-compatible types entirely to Swift. To make these new types more idiomatic in Swift, and handle migration, please see [Migrating to Swift](MigratingToSwift.md).
+Over time you may desire to migrate all of your remaining Objective-C-compatible types entirely to Swift. To make these new types more idiomatic in Swift, and handle migration, please see <doc:MigratingToSwift>).

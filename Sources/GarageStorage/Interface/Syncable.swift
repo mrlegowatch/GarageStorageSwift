@@ -9,7 +9,9 @@
 import Foundation
 
 
-/// Optional protocol for managing the sync status of a Swift type.
+/// An optional protocol for managing the web server sync status of a stored type.
+///
+/// This can be used to retrieve all objects of a specific type and sync status, eliminating the need to fetch all instances of a specific type then filtering on sync status.
 public protocol Syncable {
     
     var syncStatus: SyncStatus { get set }

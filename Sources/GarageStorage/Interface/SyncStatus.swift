@@ -8,7 +8,7 @@
 
 import Foundation
 
-/// Possible sync status states with respect to, say, a web service.
+/// Possible sync statuses with respect to a web service.
 @objc(GSSyncStatus)
 public enum SyncStatus: Int {
     /// The object's sync status has not yet been set, or is otherwise not yet determined.

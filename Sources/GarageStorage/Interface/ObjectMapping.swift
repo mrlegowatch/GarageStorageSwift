@@ -9,7 +9,7 @@
 import Foundation
 
 
-/// Provides mappings, and optionally an identifying attribute, for encoding and decoding an Objective-C-compatible ``MappableObject``'s properties.
+/// The Key-Value Coding mappings, and optionally an identifying attribute, used for encoding and decoding an Objective-C-compatible ``MappableObject``'s properties.
 ///
 /// Properties to be stored must be declared with the `@objc` keyword.
 ///
@@ -54,9 +54,7 @@ public class ObjectMapping: NSObject {
     
     /// Initializes a mapping for the specified class.
     ///
-    /// - parameter class: A class conforming to ``MappableObject``.
-    ///
-    /// - returns: An ``ObjectMapping``.
+    /// - parameter objectClass: A class conforming to ``MappableObject``.
     ///
     public init(for objectClass: AnyClass) {
         self.classNameForMapping = NSStringFromClass(objectClass)

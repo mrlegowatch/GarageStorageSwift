@@ -8,10 +8,11 @@
 
 import Foundation
 
-/// Protocol for providing a string id, to uniquely identify an instance of a `Codable` type.
+/// A protocol requiring `Codable` conformance that also requires a string `id`, for when you need to uniquely identify a top-level instance in storage.
 ///
 /// This protocol is compatible with `Identifiable` where `ID == String`.
 public protocol Mappable: Codable /*, Identifiable where ID == String */ {
 
+    /// A unique identifier.
     var id: String { get }
 }

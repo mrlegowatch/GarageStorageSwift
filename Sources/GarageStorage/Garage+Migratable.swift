@@ -49,8 +49,9 @@ private struct __ReferenceObjC: Decodable {
     }
 }
 
-// Extension that enables automatic decoding of Mappable references with identifyingAttributes
-public extension KeyedDecodingContainer {
+// Extension that enables automatic decoding of Mappable references with identifyingAttributes,
+// including in-place migration from MappableObject references.
+internal extension KeyedDecodingContainer {
 
     func decodeReferenceIfPresent(forKey key: KeyedDecodingContainer<K>.Key) throws -> String? {
         let reference: String?
@@ -146,7 +147,7 @@ extension Garage {
     /// Migrates all instances of a class conforming to ``MappableObject`` to another type conforming to `Codable`, on the assumption that the new type can decode the old class's data.
     ///
     /// - parameter oldClass: The old class.
-    /// - parameter newType: The new object type.
+    /// - parameter newType: The new object type.\
     public func migrateAll<T: Codable>(from oldClass: AnyClass, to newType: T.Type) throws {
         let oldClassName = NSStringFromClass(oldClass)
         try migrateAll(fromOldClassName: oldClassName, to: newType)
