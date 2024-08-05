@@ -9,7 +9,9 @@
 import Foundation
 
 
-/// Optional protocol for managing the sync status of an Objective-C ``MappableObject``.
+/// An optional protocol for managing the web server sync status of an Objective-C ``MappableObject``.
+///
+/// This can be used to retrieve all objects of a specific class and sync status, eliminating the need to fetch all instances of a specific class then filtering on sync status.
 @objc(GSSyncableObject)
 public protocol SyncableObject: NSObjectProtocol {
     

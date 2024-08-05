@@ -20,9 +20,9 @@ Any object going into or coming out of the Garage must conform to the `Codable` 
 
 ## Getting Started
 
-"Super-easy, barely an inconvenience!" _- Screenwriter Guy, Pitch Meetings_
+"Actually, it'll be super-easy, barely an inconvenience!" _- Screenwriter Guy, Pitch Meetings_
 
-To get started, see: [Getting Started](Documentation/GettingStarted.md).
+To get started, see: [Getting Started](Sources/GarageStorage/GarageStorage.docc/GettingStarted.md).
 
 ### Credits
 

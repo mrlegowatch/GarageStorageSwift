@@ -9,11 +9,11 @@
 import Foundation
 import CoreData
 
-/// The main Garage Storage interface for parking and retrieving objects.
+/// The main interface for parking and retrieving objects. Anything stored at the top level directly must conform to `Codable`, and also conform to either `Hashable`, or GarageStorage’s ``Mappable`` protocol.
 ///
-/// The `Garage` is the main object that coordinates activity in Garage Storage. It's called a *Garage* because you can park pretty much anything in it, like, you know, a garage. The Garage handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the Garage, and *retrieve* them later.
-/// 
-/// Any object going into or coming out of the Garage must conform to the `Codable` protocol. Some objects may need to also conform to either the `Hashable` protocol for nested objects, or the ``Mappable`` protocol (which is `Codable` and `Identifiable where ID == String`) for uniquely identified top-level objects.
+/// The `Garage` is the main object that coordinates activity in GarageStorage. It's called a *garage* because you can park pretty much anything in it, like, you know, a garage. The `Garage` handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the `Garage`, and *retrieve* them later.
+///
+/// Any object going into or coming out of the `Garage` must conform to the `Codable` protocol. Some objects may need to also conform to either the `Hashable` protocol, or the ``Mappable`` protocol (which is `Codable` and `Identifiable where ID == String`) for uniquely identified top-level objects.
 ///
 /// For Objective-C compatibility, the ``MappableObject`` protocol may be used instead.
 @objc(GSGarage)
@@ -46,7 +46,7 @@ public class Garage: NSObject {
 
     /// A convenience function that returns a `NSPersistentStoreDescription` of type `NSSQLLiteStoreType`, with a URL in the application Documents directory, of the specified store name.
     ///
-    /// - parameter storeName: the name of the store, with an appropriate file extension (e.g., ".sqlite") appended.
+    /// - parameter storeName: the name of the store, with an appropriate file extension (e.g., ".sqlite") already appended.
     ///
     /// - returns: A `NSPersistentStoreDescription` of type `NSSQLiteStoreType`, with a URL in the application Documents directory, of the specified store name.
     public static func makePersistentStoreDescription(_ storeName: String) -> NSPersistentStoreDescription {
@@ -59,7 +59,7 @@ public class Garage: NSObject {
     
     /// Creates a Garage with a default persistent store coordinator.
     /// This convenience initializer will also load the persistent store.
-    /// - parameter garageName: The name of the garage without an extension, which will be used to create a store with the same name, appending ".sqlite".
+    /// - parameter garageName: The name of the garage without an extension, which will be used to create a store with the same name, with the default ".sqlite" extension appended.
     public convenience init(named garageName: String) {
         let storeName = "\(garageName).sqlite"
         let description = Garage.makePersistentStoreDescription(storeName)
@@ -86,11 +86,11 @@ public class Garage: NSObject {
         super.init()
     }
  
-    /// Loads the persistent stores.
+    /// Loads the persistent stores, with a completion handler.
     ///
-    /// Once the Garage has been initialized, this function must be called to instruct the Garage to load the persistent stores and complete the creation of the Core Data stack.
+    /// If the Garage has been initialized with persistent store descriptions, this function must be called to instruct the Garage to load the persistent stores and complete the creation of the Core Data stack.
     ///
-    /// Once the completion handler has been called, the Garage is fully initialized and is ready for use. The completion handler will be called once for each persistent store that is created.
+    /// Once the completion handler has been called, the Garage is fully initialized and is ready for use.
     ///
     /// If there is an error in the loading of the persistent stores, the `Error` will be returned to the completion block, with the associated `NSPersistentStoreDescription`.
     ///
@@ -101,7 +101,7 @@ public class Garage: NSObject {
     
     // MARK: - Saving
     
-    /// Saves all changes to the Garage to the persistent store. This will not affect in-memory objects.
+    /// Saves all changes to the Garage's persistent store. This will not affect in-memory objects. It is not necessary to call this while autosave is enabled.
     ///
     /// This only needs to be called if `isAutosaveEnabled` is set to `false`. No error is returned, but diagnostic text will be output to the console if an error occurs.
     @objc(saveGarage)

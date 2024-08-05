@@ -49,8 +49,9 @@ private struct __ReferenceObjC: Decodable {
     }
 }
 
-// Extension that enables automatic decoding of Mappable references with identifyingAttributes
-public extension KeyedDecodingContainer {
+// Extension that enables automatic decoding of Mappable references with identifyingAttributes,
+// including in-place migration from MappableObject references.
+internal extension KeyedDecodingContainer {
 
     func decodeReferenceIfPresent(forKey key: KeyedDecodingContainer<K>.Key) throws -> String? {
         let reference: String?
