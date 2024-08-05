@@ -88,7 +88,7 @@ The Garage methods for parking, retrieving and deleting MappableObject objects a
 
 ### Working with an identifier for top-level unique objects
 
-To specify the identifier, conform to `MappableObject` and assign the `ObjectMapping identifyingAttribute`. A `MappableObject` without an ``identifyingAttribute`` will otherwise be anonymous (an embedded object in a top-level object, or an object in an array). For more details, see *Identifying Attributes* in <doc:GettingStarted>.
+To specify the identifier, conform to `MappableObject` and assign the `ObjectMapping identifyingAttribute`. A `MappableObject` without an `identifyingAttribute` will otherwise be anonymous (an embedded object in a top-level object, or an object in an array). For more details, see *Identifying Attributes* in <doc:GettingStarted>.
 
 ### Handling errors
 
