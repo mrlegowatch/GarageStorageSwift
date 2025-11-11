@@ -43,11 +43,11 @@ extension Garage {
         return coreDataObject
     }
     
-    /// Adds an object that conforms to ``Mappable`` to the Garage.
+    /// Adds an object that conforms to `Codable` and `Identifiable` to the Garage.
     ///
-    /// - parameter object: An object of type `T` that conforms to ``Mappable``.
-    public func park<T: Mappable>(_ object: T) throws {
-        try makeCoreDataObject(from: object, identifier: object.id)
+    /// - parameter object: An object of type `T` that conforms to `Codable` and `Identifiable`, where the `ID` is `LosslessStringConvertible`.
+    public func park<T: Encodable & Identifiable>(_ object: T) throws where T.ID: LosslessStringConvertible {
+        try makeCoreDataObject(from: object, identifier: String(object.id))
         
         autosave()
     }
@@ -61,12 +61,12 @@ extension Garage {
         autosave()
     }
     
-    /// Adds an array of objects that conform to ``Mappable`` to the Garage.
+    /// Adds an array of objects that conform to `Codable` and `Identifiable` to the Garage.
     ///
-    /// - parameter objects: An array of objects of the same type `T`.
-    public func parkAll<T: Mappable>(_ objects: [T]) throws {
+    /// - parameter objects: An array of objects of the same type `T`, where the `ID` is `LosslessStringConvertible`.
+    public func parkAll<T: Encodable & Identifiable>(_ objects: [T]) throws where T.ID: LosslessStringConvertible {
         for object in objects {
-            try makeCoreDataObject(from: object, identifier: object.id)
+            try makeCoreDataObject(from: object, identifier: String(object.id))
         }
         
         autosave()
@@ -96,10 +96,11 @@ extension Garage {
     /// Retrieves an object of the specified type conforming to `Codable` with the specified identifier from the Garage.
     ///
     /// - parameter objectType: The type of the object to retrieve. This type must conform to `Codable`.
-    /// - parameter identifier: The identifier of the object to retrieve. This is the identifier previously specified by either that object's ``Mappable`` `id` or `Hashable` `hashValue`.
+    /// - parameter identifier: The identifier of the object to retrieve. This is the identifier previously specified by either that object's `Identifiable` `id` or `Hashable` `hashValue`.
     ///
     /// - returns: An object conforming to the specified type, or nil if it was not found.
-    public func retrieve<T: Decodable>(_ objectType: T.Type, identifier: String) throws -> T? {
+    public func retrieve<T: Decodable>(_ objectType: T.Type, identifier: LosslessStringConvertible) throws -> T? {
+        let identifier = String(identifier)
         let typeName = String(describing: T.self)
         guard let coreDataObject = fetchObject(for: typeName, identifier: identifier) else { return nil }
         return try makeCodable(from: coreDataObject)
@@ -129,17 +130,18 @@ extension Garage {
     
     // MARK: - Deleting
     
-    private func deleteCoreDataObject<T>(_ object: T, identifier: String) throws {
+    private func deleteCoreDataObject<T>(_ object: T, identifier: LosslessStringConvertible) throws {
+        let identifier = String(identifier)
         let typeName = String(describing: T.self)
         let coreDataObject = try fetchCoreDataObject(for: typeName, identifier: identifier)
         try delete(coreDataObject)
     }
-    
-    /// Deletes an object conforming to ``Mappable`` from the Garage.
+        
+    /// Deletes an object conforming to `Identifiable` from the Garage.
     ///
-    /// - parameter object: An object conforming to ``Mappable``.
-    public func delete<T: Mappable>(_ object: T) throws {
-        let identifier = object.id
+    /// - parameter object: An object conforming to `Identifiable`, where the `ID` is `LosslessStringConvertible`.
+    public func delete<T: Identifiable>(_ object: T) throws where T.ID: LosslessStringConvertible {
+        let identifier = String(object.id)
         try deleteCoreDataObject(object, identifier: identifier)
     }
  

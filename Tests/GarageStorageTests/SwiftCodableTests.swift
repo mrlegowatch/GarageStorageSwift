@@ -23,7 +23,7 @@ class SwiftCodableTests: XCTestCase {
         garage.deleteAllObjects()
     }
     
-    func testMappable() {
+    func testIdentifiable() {
         let garage = Garage(named: testStoreName)
         
         // Create a "Sam" person and park it.
@@ -47,8 +47,35 @@ class SwiftCodableTests: XCTestCase {
         }
     }
 
+    func testMappableNonString() {
+        let garage = Garage(named: testStoreName)
+        
+        // Create a "Peaches" pet and park it.
+        do {
+            let pet = swiftPet()
+            let pet2 = swiftPet2()
+            try? garage.parkAll([pet, pet2])
+        }
+        
+        // Retrieve each pet by identifier.
+        do {
+            let pet = try? garage.retrieve(SwiftPet.self, identifier: 3)
+            XCTAssertNotNil(pet, "Failed to retrieve 'Peaches' from garage")
+            XCTAssertEqual(pet?.name ?? "", "Peaches", "expected Peaches to be Peaches")
+    
+            let pet2 = try? garage.retrieve(SwiftPet.self, identifier: 5)
+            XCTAssertNotNil(pet2, "Failed to retrieve 'Cream' from garage")
+            XCTAssertEqual(pet2?.name ?? "", "Cream", "expected Cream to be Cream")
+            
+            XCTAssertNotEqual(pet, pet2, "expected different pets")
+            
+            let pet3 = try? garage.retrieve(SwiftPet.self, identifier: 3)
+            XCTAssertNotNil(pet3, "Failed to retrieve 'Cream' from garage")
+            XCTAssertEqual(pet, pet3, "expected separate fetches to return equivalent objects")
+        }
+    }
 
-    func testArrayOfMappable() {
+    func testArrayOfIdentifiable() {
         let garage = Garage(named: testStoreName)
         
         // Create a pair of people and park them.
@@ -248,7 +275,7 @@ class SwiftCodableTests: XCTestCase {
         }
     }
     
-    func testMappables() {
+    func testIdentifiableReferences() {
         let garage = Garage(named: testStoreName)
 
         do {
@@ -298,6 +325,40 @@ class SwiftCodableTests: XCTestCase {
         }
         catch {
             XCTFail("Should not have thrown an error: \(error)")
+        }
+    }
+    
+    // This test seeks to ensure that an Identifiable can also be encoded to pure JSON (no references, only values).
+    func testPureSwiftCodable() {
+        // No garage
+        
+        let data: Data
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let sam = swiftPerson()
+            data = try encoder.encode(sam)
+            
+            // For debugging:
+            //let string = String(data: data, encoding: .utf8)!
+            //print(string)
+        }
+        catch {
+            XCTFail("Should not fail to decode")
+            return
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            let sam = try decoder.decode(SwiftPerson.self, from: data)
+            XCTAssertEqual(sam.name, "Sam", "name")
+            XCTAssertEqual(sam.address, swiftAddress(), "address")
+            XCTAssertNotNil(sam.brother, "brother")
+            XCTAssertEqual(sam.siblings.count, 2, "siblings")
+        }
+        catch let error as NSError {
+            XCTFail("Should not fail to decode, error: \(error.debugDescription)")
+            return
         }
     }
 }

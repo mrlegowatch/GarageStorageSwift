@@ -10,7 +10,7 @@ import Foundation
 import GarageStorage
 
 // This class is used to test multiple references.
-struct SwiftBranch: Mappable {
+struct SwiftBranch: Codable, Identifiable {
     
     var id: String = ""
     var branches: [SwiftBranch] = []
@@ -23,7 +23,7 @@ struct SwiftBranch: Mappable {
 // Make conformance to Equatable, for testing.
 extension SwiftBranch: Equatable { }
 
-class SwiftTree: Mappable {
+class SwiftTree: Codable, Identifiable {
     
     var id: String = ""
     var mainBranch: SwiftBranch // non-optional, to test required properties.

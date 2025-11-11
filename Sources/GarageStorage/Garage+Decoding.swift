@@ -24,8 +24,7 @@ internal func decodeISODate(_ decoder: Decoder) throws -> Date {
     return date
 }
 
-// Extension that enables automatic decoding of Mappable references with identifyingAttributes,
-// including in-place migration from MappableObject references.
+// Extension that enables automatic decoding of Identifiable references.
 internal extension KeyedDecodingContainer {
 
     func decodeReferenceIfPresent(forKey key: KeyedDecodingContainer<K>.Key) throws -> String? {
@@ -43,7 +42,7 @@ internal extension KeyedDecodingContainer {
 
     func decodeReference(forKey key: KeyedDecodingContainer<K>.Key) throws -> String {
         guard let reference = try decodeReferenceIfPresent(forKey: key) else {
-            throw try superDecoder().makeDecodingError("Failed to decode Mappable reference")
+            throw try superDecoder().makeDecodingError("Failed to decode Identifiable reference")
         }
         
         return reference

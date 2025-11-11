@@ -49,4 +49,18 @@ extension XCTestCase {
         person.age = 24
         return person
     }
+    
+    func swiftPet() -> SwiftPet {
+        let pet = SwiftPet()
+        pet.name = "Peaches"
+        pet.age = 3
+        return pet
+    }
+    
+    func swiftPet2() -> SwiftPet {
+        let pet = SwiftPet()
+        pet.name = "Cream"
+        pet.age = 5
+        return pet
+    }
 }

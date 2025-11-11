@@ -9,13 +9,13 @@
 import Foundation
 
 // This file contains extensions for encoding and decoding nested
-// Mappable objects by reference.
+// Identifiable objects by reference.
 //
 // The Swift runtime needs to provide a nudge for whether about-to-be-saved
-// reference is an explicitly-parked object (a `Mappable` with an `id`),
-// so the Garage is stored and accessed via the super encoder or decoder to
-// ensure that they are parked appropriately. Without this, the references
-// would fail to be retrieved.
+// reference is an explicitly-parked object (an `Identifiable` with an `id`
+// conforming to `LosslessStringConvertible`), so the Garage is stored and
+// accessed via the super encoder or decoder to ensure that they are parked
+// appropriately. Without this, the references would fail to be retrieved.
 
 extension Encoder {
     
@@ -23,48 +23,48 @@ extension Encoder {
 }
 
 
-/// These encoding extensions are exposed to the Swift runtime, to ensure that references to any embedded `Mappable` objects are correctly parked at the top level of the Garage.
+/// These encoding extensions are exposed to the Swift runtime, to ensure that references to any embedded `Identifiable` objects (where `ID` is `LosslessStringConvertible`) are correctly parked at the top level of the Garage.
 public extension KeyedEncodingContainer {
     
-    /// Wraps the default `encode` implementation so that we can call it from our Mappable version.
+    /// Wraps the default `encode` implementation so that we can call it from our Identifiable version.
     private mutating func encodeDefault<T: Encodable>(_ codable: T, forKey key: KeyedEncodingContainer<K>.Key) throws {
         try encode(codable, forKey: key)
     }
     
-    /// Encodes a nested `Mappable` object as a reference.
-    mutating func encode<T: Mappable>(_ mappable: T, forKey key: KeyedEncodingContainer<K>.Key) throws {
+    /// Encodes a nested `Identifiable` object (where `ID` is `LosslessStringConvertible`) as a reference.
+    mutating func encode<T: Encodable & Identifiable>(_ identifiable: T, forKey key: KeyedEncodingContainer<K>.Key) throws where T.ID: LosslessStringConvertible {
         // If this encoder does not have a garage, encode as Codable does.
         let encoder = superEncoder()
         guard let garage = encoder.garage else {
-            try encodeDefault(mappable, forKey: key)
+            try encodeDefault(identifiable, forKey: key)
             return
         }
         
         // Park the object and encode it as a reference
-        try garage.park(mappable)
-        let reference = mappable.id
+        try garage.park(identifiable)
+        let reference = String(identifiable.id)
         try encode(reference, forKey: key)
     }
 
-    /// Encodes a nested `Mappable` object as a reference, if present.
-    mutating func encodeIfPresent<T: Mappable>(_ mappable: T?, forKey key: KeyedEncodingContainer<K>.Key) throws {
-        guard let mappable = mappable else { return }
-        try encode(mappable, forKey: key)
+    /// Encodes a nested `Identifiable` object (where `ID` is `LosslessStringConvertible`) as a reference, if present.
+    mutating func encodeIfPresent<T: Encodable & Identifiable>(_ identifiable: T?, forKey key: KeyedEncodingContainer<K>.Key) throws where T.ID: LosslessStringConvertible {
+        guard let identifiable = identifiable else { return }
+        try encode(identifiable, forKey: key)
     }
     
-    /// Encodes a nested array of `Mappable` objects as references.
-    mutating func encode<T: Mappable>(_ mappables: [T], forKey key: KeyedEncodingContainer<K>.Key) throws {
-        guard mappables.count > 0 else { return }
+    /// Encodes a nested array of `Identifiable` objects (where `ID` is `LosslessStringConvertible`) as references.
+    mutating func encode<T: Encodable & Identifiable>(_ identifiables: [T], forKey key: KeyedEncodingContainer<K>.Key) throws where T.ID: LosslessStringConvertible {
+        guard identifiables.count > 0 else { return }
         // If this encoder does not have a garage, encode as Codable does.
         let encoder = superEncoder()
         guard let garage = encoder.garage else {
-            try encodeDefault(mappables, forKey: key)
+            try encodeDefault(identifiables, forKey: key)
             return
         }
         
         // Park the objects and encode them as references
-        try garage.parkAll(mappables)
-        let references = mappables.map { $0.id }
+        try garage.parkAll(identifiables)
+        let references = identifiables.map { String($0.id) }
         try encode(references, forKey: key)
     }
 }
@@ -81,16 +81,16 @@ extension Decoder {
     }
 }
 
-/// These decoding extensions are exposed to the Swift runtime, to ensure that references to any embedded `Mappable` objects are correctly retrieved from the top level of the Garage.
+/// These decoding extensions are exposed to the Swift runtime, to ensure that references to any embedded `Identifiable` objects (where `ID` is `LosslessStringConvertible`) are correctly retrieved from the top level of the Garage.
 public extension KeyedDecodingContainer {
     
-    /// Wraps the default `decode` implementation so that we can call it from our Mappable version.
+    /// Wraps the default `decode` implementation so that we can call it from our Identifiable version.
     private func decodeDefault<T: Decodable>(_ codable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T {
         return try decode(T.self, forKey: key)
     }
 
-    /// Decodes a reference to a nested Mappable object.
-    func decode<T: Mappable>(_ mappable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T {
+    /// Decodes a reference to a nested Identifiable object (where `ID` is `LosslessStringConvertible`).
+    func decode<T: Decodable & Identifiable>(_ identifiable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T where T.ID: LosslessStringConvertible {
         // If this decoder does not have a garage, decode as Codable does.
         let decoder = try superDecoder()
         guard let garage = decoder.garage else {
@@ -104,13 +104,13 @@ public extension KeyedDecodingContainer {
         return object
     }
     
-    /// Wraps the default `decodeIfPresent` implementation so that we can call it from our Mappable version.
+    /// Wraps the default `decodeIfPresent` implementation so that we can call it from our Identifiable version.
     private func decodeIfPresentDefault<T: Decodable>(_ codable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T? {
         return try decodeIfPresent(T.self, forKey: key)
     }
     
-    /// Decodes a reference to a nested `Mappable` object, if present.
-    func decodeIfPresent<T: Mappable>(_ mappable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T? {
+    /// Decodes a reference to a nested `Identifiable` object (where `ID` is `LosslessStringConvertible`), if present.
+    func decodeIfPresent<T: Decodable & Identifiable>(_ identifiable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T? where T.ID: LosslessStringConvertible {
         // If this decoder does not have a garage, decode as Codable does.
         let decoder = try superDecoder()
         guard let garage = decoder.garage else {
@@ -123,8 +123,8 @@ public extension KeyedDecodingContainer {
         return try garage.retrieve(T.self, identifier: reference)
     }
     
-    /// Decodes an array of references to nested `Mappable` objects.
-    func decode<T: Mappable>(_ mappable: [T].Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> [T] {
+    /// Decodes an array of references to nested `Identifiable` objects (where `ID` is `LosslessStringConvertible`).
+    func decode<T: Decodable & Identifiable>(_ identifiable: [T].Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> [T] where T.ID: LosslessStringConvertible {
         // If this decoder does not have a garage, decode as Codable does.
         let decoder = try superDecoder()
         guard let garage = decoder.garage else {
