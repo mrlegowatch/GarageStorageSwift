@@ -19,7 +19,7 @@ extension Garage {
         
         let decoder = JSONDecoder()
         decoder.userInfo[Garage.userInfoKey] = self
-        decoder.dateDecodingStrategy = .custom(decodeTransformableDate)
+        decoder.dateDecodingStrategy = .custom(decodeISODate)
         
         return try decoder.decode(T.self, from: data)
     }
