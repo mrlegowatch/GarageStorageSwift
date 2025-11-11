@@ -6,359 +6,326 @@
 //  Copyright © 2019 Wellframe. All rights reserved.
 //
 
-import XCTest
+import Testing
 import GarageStorage
 import CoreData
 
 // This set of tests checks Codable (hence "Swift-y") types.
-class SwiftCodableTests: XCTestCase {
-
-    override class func setUp() {
-        TestSetup.classSetUp()
-    }
+@Suite("Swift Codable Tests")
+struct SwiftCodableTests {
     
-    override func setUp() {
+    init() {
+        TestSetup.classSetUp()
         // Reset the underlying storage before running each test.
         let garage = Garage(named: testStoreName)
         garage.deleteAllObjects()
     }
     
-    func testIdentifiable() {
-        let garage = Garage(named: testStoreName)
+    @Test("Identifiable objects can be parked and retrieved")
+    func identifiable() throws {
+        let garage = makeTestGarage()
         
         // Create a "Sam" person and park it.
-        do {
-            let sam = swiftPerson()
-            try? garage.park(sam)//XCTAssertNoThrow(..., "parkObject")
-        }
+        let sam = swiftPerson()
+        try garage.park(sam)
         
         // Retrieve the "Sam" person.
-        do {
-            let sam = try? garage.retrieve(SwiftPerson.self, identifier: "Sam")
-            XCTAssertNotNil(sam, "Failed to retrieve 'Sam' from garage store")
-            XCTAssertEqual(sam?.name ?? "", "Sam", "expected Sam to be Sam")
-            XCTAssertEqual(sam?.importantDates.count ?? 0, 3, "expected 3 important dates")
-            
-            // Make sure brother and siblings worked out.
-            let brother = sam?.brother
-            XCTAssertNotNil(brother, "O brother, my brother")
-            XCTAssertEqual(brother?.name ?? "", "Nick", "expected brother to be Nick")
-            XCTAssertEqual(sam?.siblings.count, 2, "expected 2 siblings")
-        }
+        let retrievedSam = try #require(try garage.retrieve(SwiftPerson.self, identifier: "Sam"))
+        #expect(retrievedSam.name == "Sam", "expected Sam to be Sam")
+        #expect(retrievedSam.importantDates.count == 3, "expected 3 important dates")
+        
+        // Make sure brother and siblings worked out.
+        let brother = retrievedSam.brother
+        #expect(brother != nil, "O brother, my brother")
+        #expect(brother?.name == "Nick", "expected brother to be Nick")
+        #expect(retrievedSam.siblings.count == 2, "expected 2 siblings")
     }
 
-    func testMappableNonString() {
-        let garage = Garage(named: testStoreName)
-        
+    @Test("Mappable non-string identifiers work correctly")
+    func mappableNonString() throws {
+        let garage = makeTestGarage()
+
         // Create a "Peaches" pet and park it.
-        do {
-            let pet = swiftPet()
-            let pet2 = swiftPet2()
-            try? garage.parkAll([pet, pet2])
-        }
+        let pet = swiftPet()
+        let pet2 = swiftPet2()
+        try garage.parkAll([pet, pet2])
         
         // Retrieve each pet by identifier.
-        do {
-            let pet = try? garage.retrieve(SwiftPet.self, identifier: 3)
-            XCTAssertNotNil(pet, "Failed to retrieve 'Peaches' from garage")
-            XCTAssertEqual(pet?.name ?? "", "Peaches", "expected Peaches to be Peaches")
-    
-            let pet2 = try? garage.retrieve(SwiftPet.self, identifier: 5)
-            XCTAssertNotNil(pet2, "Failed to retrieve 'Cream' from garage")
-            XCTAssertEqual(pet2?.name ?? "", "Cream", "expected Cream to be Cream")
-            
-            XCTAssertNotEqual(pet, pet2, "expected different pets")
-            
-            let pet3 = try? garage.retrieve(SwiftPet.self, identifier: 3)
-            XCTAssertNotNil(pet3, "Failed to retrieve 'Cream' from garage")
-            XCTAssertEqual(pet, pet3, "expected separate fetches to return equivalent objects")
-        }
+        let retrievedPet = try #require(try garage.retrieve(SwiftPet.self, identifier: 3))
+        #expect(retrievedPet.name == "Peaches", "expected Peaches to be Peaches")
+
+        let retrievedPet2 = try #require(try garage.retrieve(SwiftPet.self, identifier: 5))
+        #expect(retrievedPet2.name == "Cream", "expected Cream to be Cream")
+        
+        #expect(retrievedPet != retrievedPet2, "expected different pets")
+        
+        let retrievedPet3 = try #require(try garage.retrieve(SwiftPet.self, identifier: 3))
+        #expect(retrievedPet == retrievedPet3, "expected separate fetches to return equivalent objects")
     }
 
-    func testArrayOfIdentifiable() {
-        let garage = Garage(named: testStoreName)
-        
+    @Test("Array of identifiable objects can be parked")
+    func arrayOfIdentifiable() throws {
+        let garage = makeTestGarage()
+
         // Create a pair of people and park them.
-        do {
-            let nick = swiftPerson2()
-            let emily = swiftPerson3()
-            XCTAssertNoThrow(try garage.parkAll([nick, emily]), "parkObjects")
-        }
+        let nick = swiftPerson2()
+        let emily = swiftPerson3()
+        try garage.parkAll([nick, emily])
         
         // Retrieve each person.
-        do {
-            let nick = try? garage.retrieve(SwiftPerson.self, identifier: "Nick")
-            XCTAssertNotNil(nick, "Failed to retrieve 'Nick' from garage store")
-            
-            let emily = try? garage.retrieve(SwiftPerson.self, identifier: "Emily")
-            XCTAssertNotNil(emily, "Failed to retrieve 'Emily' from garage store")
-            
-            let sam = try? garage.retrieve(SwiftPerson.self, identifier: "Sam")
-            XCTAssertNil(sam, "Should not have been able to retrieve 'Sam' from garage store")
-        }
+        let retrievedNick = try #require(try garage.retrieve(SwiftPerson.self, identifier: "Nick"))
+        #expect(retrievedNick.name == "Nick", "Failed to retrieve 'Nick' from garage store")
+        
+        let retrievedEmily = try #require(try garage.retrieve(SwiftPerson.self, identifier: "Emily"))
+        #expect(retrievedEmily.name == "Emily", "Failed to retrieve 'Emily' from garage store")
+        
+        let sam = try? garage.retrieve(SwiftPerson.self, identifier: "Sam")
+        #expect(sam == nil, "Should not have been able to retrieve 'Sam' from garage store")
     }
 
-    func testRetrievingCollections() {
-        let garage = Garage(named: testStoreName)
-        
+    @Test("Retrieving collections of different types")
+    func retrievingCollections() throws {
+        let garage = makeTestGarage()
+
         // Park heterogeneous objects
-        do {
-            let sam = swiftPerson()
-            let nick = swiftPerson2()
-            let emily = swiftPerson3()
-            
-            let oldAddress = swiftAddress()
-            let newAddress = swiftAddress2()
-            // Swift strong type checking needs arrays to be homogeneous, and therefore separately parked
-            XCTAssertNoThrow(try garage.parkAll([nick, emily, sam]), "parkAll")
-            XCTAssertNoThrow(try garage.parkAll([oldAddress, newAddress]), "parkAll")
-        }
+        let sam = swiftPerson()
+        let nick = swiftPerson2()
+        let emily = swiftPerson3()
+        
+        let oldAddress = swiftAddress()
+        let newAddress = swiftAddress2()
+        // Swift strong type checking needs arrays to be homogeneous, and therefore separately parked
+        try garage.parkAll([nick, emily, sam])
+        try garage.parkAll([oldAddress, newAddress])
         
         // Retrieve persons
-        do {
-            let people = try garage.retrieveAll(SwiftPerson.self)
-            XCTAssertEqual(people.count, 3, "Number of Persons didn't match")
-            
-            // Check that everybody is there
-            var names = ["Sam", "Nick", "Emily"]
-            for person in people {
-                names.removeAll { person.name == $0 }
-            }
-            XCTAssertEqual(names.count, 0, "should have found all 3 people")
+        let people = try garage.retrieveAll(SwiftPerson.self)
+        #expect(people.count == 3, "Number of Persons didn't match")
+        
+        // Check that everybody is there
+        var names = ["Sam", "Nick", "Emily"]
+        for person in people {
+            names.removeAll { person.name == $0 }
         }
-        catch {
-            XCTFail("retrieveAllObjects should not throw an error, \(error)")
-        }
+        #expect(names.count == 0, "should have found all 3 people")
         
         // Retrieve Addresses
-        do {
-            let addresses = try garage.retrieveAll(SwiftAddress.self)
-            XCTAssertEqual(addresses.count, 2, "Number of Persons didn't match")
-        }
-        catch {
-            XCTFail("retrieveAllObjects should not throw an error, \(error)")
-        }
+        let addresses = try garage.retrieveAll(SwiftAddress.self)
+        #expect(addresses.count == 2, "Number of Addresses didn't match")
     }
-    
 
-    func testDeletingObject() {
-        let garage = Garage(named: testStoreName)
-        
+    @Test("Deleting a single object")
+    func deletingObject() throws {
+        let garage = makeTestGarage()
+
         // Park heterogeneous objects
-        do {
-            let sam = swiftPerson()
-            let nick = swiftPerson2()
-            let emily = swiftPerson3()
-            
-            XCTAssertNoThrow(try garage.parkAll([nick, emily, sam]), "parkAll")
-        }
+        let sam = swiftPerson()
+        let nick = swiftPerson2()
+        let emily = swiftPerson3()
+        
+        try garage.parkAll([nick, emily, sam])
         
         // Delete a person
-        do {
-            let nick = try? garage.retrieve(SwiftPerson.self, identifier: "Nick")
-            XCTAssertNotNil(nick, "We need nick, so we can delete him")
-            if let nick = nick {
-                XCTAssertNoThrow(try garage.delete(nick), "deleteObject")
-            }
-        }
+        let nickToDelete = try #require(try garage.retrieve(SwiftPerson.self, identifier: "Nick"))
+        try garage.delete(nickToDelete)
         
         // Confirm that the person has been deleted
-        do {
-            let nick = try? garage.retrieve(SwiftPerson.self, identifier: "Nick")
-            XCTAssertNil(nick, "Nick should be gone")
-        }
+        let retrievedNick = try? garage.retrieve(SwiftPerson.self, identifier: "Nick")
+        #expect(retrievedNick == nil, "Nick should be gone")
     }
  
-    func testDeletingCollections() {
-        let garage = Garage(named: testStoreName)
-        
+    @Test("Deleting collections by type")
+    func deletingCollections() throws {
+        let garage = makeTestGarage()
+
         // Park heterogeneous objects
-        do {
-            let sam = swiftPerson()
-            let nick = swiftPerson2()
-            let emily = swiftPerson3()
-            
-            let oldAddress = swiftAddress()
-            let newAddress = swiftAddress2()
-            XCTAssertNoThrow(try garage.parkAll([nick, emily, sam]), "parkAll")
-            XCTAssertNoThrow(try garage.parkAll([oldAddress, newAddress]), "parkAll")
-        }
+        let sam = swiftPerson()
+        let nick = swiftPerson2()
+        let emily = swiftPerson3()
+        
+        let oldAddress = swiftAddress()
+        let newAddress = swiftAddress2()
+        try garage.parkAll([nick, emily, sam])
+        try garage.parkAll([oldAddress, newAddress])
         
         // Delete persons
-        do {
-            garage.deleteAll(SwiftPerson.self)
-        }
+        garage.deleteAll(SwiftPerson.self)
         
         // Confirm that there are no persons
-        do {
-            let persons = try garage.retrieveAll(SwiftPerson.self)
-            XCTAssertEqual(persons.count, 0, "Should not be any Persons")
-            
-            let addresses = try garage.retrieveAll(SwiftAddress.self)
-            XCTAssertEqual(addresses.count, 2, "Should have 2 Addresses")
-            XCTAssertEqual(addresses[0].city, "Boston", "all addresses should be based in Boston")
-        }
-        catch {
-            XCTFail("retrieveAll should not throw an error, \(error)")
-        }
+        let persons = try garage.retrieveAll(SwiftPerson.self)
+        #expect(persons.count == 0, "Should not be any Persons")
+        
+        let addresses = try garage.retrieveAll(SwiftAddress.self)
+        #expect(addresses.count == 2, "Should have 2 Addresses")
+        #expect(addresses[0].city == "Boston", "all addresses should be based in Boston")
     }
 
+    @Test("Deleting all objects from garage")
+    func deletingAllObjects() throws {
+        let garage = makeTestGarage()
 
-    func testDeletingAllObjects() {
-        let garage = Garage(named: testStoreName)
-        
         // Park heterogeneous objects
-        do {
-            let sam = swiftPerson()
-            let nick = swiftPerson2()
-            let emily = swiftPerson3()
-            
-            let oldAddress = swiftAddress()
-            let newAddress = swiftAddress2()
-            XCTAssertNoThrow(try garage.parkAll([nick, emily, sam]), "parkAll")
-            XCTAssertNoThrow(try garage.parkAll([oldAddress, newAddress]), "parkAll")
-        }
+        let sam = swiftPerson()
+        let nick = swiftPerson2()
+        let emily = swiftPerson3()
+        
+        let oldAddress = swiftAddress()
+        let newAddress = swiftAddress2()
+        try garage.parkAll([nick, emily, sam])
+        try garage.parkAll([oldAddress, newAddress])
         
         // Delete everything
-        do {
-            garage.deleteAllObjects()
-        }
+        garage.deleteAllObjects()
         
         // Confirm that there are no persons
-        do {
-            let persons = try garage.retrieveAll(SwiftPerson.self)
-            XCTAssertEqual(persons.count, 0, "Should not be any Persons")
-            
-            let addresses = try garage.retrieveAll(SwiftAddress.self)
-            XCTAssertEqual(addresses.count, 0, "Should not be any Addresses")
-        }
-        catch {
-            XCTFail("retrieveAllObjects should not throw an error, \(error)")
-        }
+        let persons = try garage.retrieveAll(SwiftPerson.self)
+        #expect(persons.count == 0, "Should not be any Persons")
+        
+        let addresses = try garage.retrieveAll(SwiftAddress.self)
+        #expect(addresses.count == 0, "Should not be any Addresses")
         
         // Delete everything again (hits the no-op case, for code coverage)
-        do {
-            garage.deleteAll(SwiftPerson.self)
-            garage.deleteAllObjects()
-        }
+        garage.deleteAll(SwiftPerson.self)
+        garage.deleteAllObjects()
     }
 
-    
-    func testDates() {
-        let garage = Garage(named: testStoreName)
-        
-        do {
-            let sam = swiftPerson()
-            
-            // Set sam's birthdate to 1950/01/01 04:00:00
+    @Test("Date encoding and decoding")
+    func dates() throws {
+        let garage = makeTestGarage()
 
-            let timeZone = TestSetup.timeZone
-            var dateComponents = DateComponents()
-            dateComponents.day = 1
-            dateComponents.month = 1
-            dateComponents.year = 1950
-            dateComponents.timeZone = timeZone
-            
-            var calendar = Calendar.current
-            calendar.timeZone = timeZone
-            sam.birthdate = calendar.date(from: dateComponents)!
-            XCTAssertEqual(sam.birthdate.timeIntervalSinceReferenceDate, -1609459200.0, "Making assumption about the test")
-            
-            XCTAssertNoThrow(try garage.park(sam), "parkObject")
-        }
+        let sam = swiftPerson()
         
-        do {
-            let sam = try? garage.retrieve(SwiftPerson.self, identifier: "Sam")
-            XCTAssertNotNil(sam, "Failed to retrieve 'Sam' from garage store")
-
-            XCTAssertEqual(sam?.birthdate.timeIntervalSinceReferenceDate ?? 0, -1609459200.0, "Reconstituted date failed")
-        }
+        // Set sam's birthdate to 1950/01/01 04:00:00
+        let timeZone = TestSetup.timeZone
+        var dateComponents = DateComponents()
+        dateComponents.day = 1
+        dateComponents.month = 1
+        dateComponents.year = 1950
+        dateComponents.timeZone = timeZone
+        
+        var calendar = Calendar.current
+        calendar.timeZone = timeZone
+        sam.birthdate = calendar.date(from: dateComponents)!
+        #expect(sam.birthdate.timeIntervalSinceReferenceDate == -1609459200.0, "Making assumption about the test")
+        
+        try garage.park(sam)
+        
+        let retrievedSam = try #require(try garage.retrieve(SwiftPerson.self, identifier: "Sam"))
+        #expect(retrievedSam.birthdate.timeIntervalSinceReferenceDate == -1609459200.0, "Reconstituted date failed")
     }
     
-    func testIdentifiableReferences() {
-        let garage = Garage(named: testStoreName)
+    @Test("Identifiable references are preserved")
+    func identifiableReferences() throws {
+        let garage = makeTestGarage()
 
-        do {
-            // Configure a tree consisting of lots of referenced branches
-            let topBranch = SwiftBranch(name: "Top")
-            let upperBranch = SwiftBranch(name: "Upper")
-            let lowerBranch = SwiftBranch(name: "Lower")
-            let bottomBranch = SwiftBranch(name: "Bottom")
-            
-            // Careful with structs! Once rightBranch goes into leftBranch's branches, changing rightBranch's branches does not affect the one that went into leftBranch.
-            // Use references when you mean to use them.
-            var rightBranch = SwiftBranch(name: "Right")
-            rightBranch.branches = [lowerBranch, bottomBranch]
-            var leftBranch = SwiftBranch(name: "Left")
-            leftBranch.branches = [upperBranch, rightBranch, topBranch]
-            
-            let tree = SwiftTree(name: "Tree", mainBranch: leftBranch)
-
-            // Note that we only need to park the toplevel object, the rest are parked for free.
-            XCTAssertNoThrow(try garage.park(tree), "park should not throw")
-        }
+        // Configure a tree consisting of lots of referenced branches
+        let topBranch = SwiftBranch(name: "Top")
+        let upperBranch = SwiftBranch(name: "Upper")
+        let lowerBranch = SwiftBranch(name: "Lower")
+        let bottomBranch = SwiftBranch(name: "Bottom")
         
-        do {
-            let tree = try? garage.retrieve(SwiftTree.self, identifier: "Tree")
-            XCTAssertNotNil(tree, "tree should be non-nil")
-            
-            let leftBranch = try? garage.retrieve(SwiftBranch.self, identifier: "Left")
-            XCTAssertNotNil(leftBranch, "leftBranch should be non-nil")
+        // Careful with structs! Once rightBranch goes into leftBranch's branches, changing rightBranch's branches does not affect the one that went into leftBranch.
+        // Use references when you mean to use them.
+        var rightBranch = SwiftBranch(name: "Right")
+        rightBranch.branches = [lowerBranch, bottomBranch]
+        var leftBranch = SwiftBranch(name: "Left")
+        leftBranch.branches = [upperBranch, rightBranch, topBranch]
+        
+        let tree = SwiftTree(name: "Tree", mainBranch: leftBranch)
 
-            XCTAssertEqual(tree?.mainBranch.branches.count ?? 0, 3, "Should have 3 branches")
-            XCTAssertEqual(tree?.mainBranch, leftBranch, "Should be equal")
+        // Note that we only need to park the toplevel object, the rest are parked for free.
+        try garage.park(tree)
+        
+        let retrievedTree = try #require(try garage.retrieve(SwiftTree.self, identifier: "Tree"))
+        
+        let leftBranchRetrieved = try #require(try garage.retrieve(SwiftBranch.self, identifier: "Left"))
 
-            let rightBranch = try? garage.retrieve(SwiftBranch.self, identifier: "Right")
-            XCTAssertNotNil(rightBranch, "rightBranch should be non-nil")
+        #expect(retrievedTree.mainBranch.branches.count == 3, "Should have 3 branches")
+        #expect(retrievedTree.mainBranch == leftBranchRetrieved, "Should be equal")
 
-            XCTAssertEqual(rightBranch?.branches.count ?? 0, 2, "Should have 2 branches")
-
-        }
+        let rightBranchRetrieved = try #require(try garage.retrieve(SwiftBranch.self, identifier: "Right"))
+        #expect(rightBranchRetrieved.branches.count == 2, "Should have 2 branches")
     }
     
-    func testNonExistentObject() {
-        let garage = Garage(named: testStoreName)
-        
-        do {
-            let frodo = try garage.retrieve(SwiftPerson.self, identifier: "Frodo")
-            XCTAssertNil(frodo, "Should be nil")
-        }
-        catch {
-            XCTFail("Should not have thrown an error: \(error)")
-        }
+    @Test("Retrieving non-existent object returns nil")
+    func nonExistentObject() throws {
+        let garage = makeTestGarage()
+
+        let frodo = try? garage.retrieve(SwiftPerson.self, identifier: "Frodo")
+        #expect(frodo == nil, "Should be nil")
     }
     
-    // This test seeks to ensure that an Identifiable can also be encoded to pure JSON (no references, only values).
-    func testPureSwiftCodable() {
+    @Test("Identifiable can be encoded to pure JSON")
+    func pureSwiftCodable() throws {
         // No garage
         
-        let data: Data
-        do {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-            let sam = swiftPerson()
-            data = try encoder.encode(sam)
-            
-            // For debugging:
-            //let string = String(data: data, encoding: .utf8)!
-            //print(string)
-        }
-        catch {
-            XCTFail("Should not fail to decode")
-            return
-        }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let sam = swiftPerson()
+        let data = try encoder.encode(sam)
         
-        do {
-            let decoder = JSONDecoder()
-            let sam = try decoder.decode(SwiftPerson.self, from: data)
-            XCTAssertEqual(sam.name, "Sam", "name")
-            XCTAssertEqual(sam.address, swiftAddress(), "address")
-            XCTAssertNotNil(sam.brother, "brother")
-            XCTAssertEqual(sam.siblings.count, 2, "siblings")
-        }
-        catch let error as NSError {
-            XCTFail("Should not fail to decode, error: \(error.debugDescription)")
-            return
-        }
+        // For debugging:
+        //let string = String(data: data, encoding: .utf8)!
+        //print(string)
+        
+        let decoder = JSONDecoder()
+        let decodedSam = try decoder.decode(SwiftPerson.self, from: data)
+        #expect(decodedSam.name == "Sam", "name")
+        #expect(decodedSam.address == swiftAddress(), "address")
+        #expect(decodedSam.brother != nil, "brother")
+        #expect(decodedSam.siblings.count == 2, "siblings")
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func swiftAddress() -> SwiftAddress {
+        SwiftAddress(street: "330 Congress St.", city: "Boston", zip: "02140")
+    }
+    
+    private func swiftAddress2() -> SwiftAddress {
+        SwiftAddress(street: "321 Summer Street", city: "Boston", zip: "02140")
+    }
+    
+    private func swiftPerson() -> SwiftPerson {
+        let person = SwiftPerson()
+        person.name = "Sam"
+        person.age = 31
+        person.birthdate = Date()
+        person.address = swiftAddress()
+        person.importantDates = [Date(), Date(timeIntervalSince1970: 0), Date(timeIntervalSince1970: 100)]
+        person.brother = swiftPerson2()
+        person.siblings = [person.brother!, swiftPerson3()]
+        
+        return person
+    }
+    
+    private func swiftPerson2() -> SwiftPerson {
+        let person = SwiftPerson()
+        person.name = "Nick"
+        person.address = swiftAddress()
+        person.age = 26
+        return person
+    }
+    
+    private func swiftPerson3() -> SwiftPerson {
+        let person = SwiftPerson()
+        person.name = "Emily"
+        person.address = swiftAddress()
+        person.age = 24
+        return person
+    }
+    
+    private func swiftPet() -> SwiftPet {
+        let pet = SwiftPet()
+        pet.name = "Peaches"
+        pet.age = 3
+        return pet
+    }
+    
+    private func swiftPet2() -> SwiftPet {
+        let pet = SwiftPet()
+        pet.name = "Cream"
+        pet.age = 5
+        return pet
     }
 }

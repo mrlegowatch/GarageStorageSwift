@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import GarageStorage
+import CoreData
 
 public class TestSetup {
     
@@ -20,3 +22,12 @@ public class TestSetup {
 
 /// Use this test store name for Garage Storage tests.
 let testStoreName = "GarageStorageTests"
+
+/// Returns a test garage for a named specific test point that is in-memory only.
+func makeTestGarage(_ name: String = #function) -> Garage {
+    let persistentStore = Garage.makePersistentStoreDescription("\(name).sqlite")
+    persistentStore.type = NSInMemoryStoreType
+    let garage = Garage(with: [persistentStore])
+    garage.loadPersistentStores { _, _ in }
+    return garage
+}
