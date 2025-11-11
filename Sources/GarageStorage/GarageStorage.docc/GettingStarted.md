@@ -114,40 +114,9 @@ You can also delete all objects from the Garage:
     garage.deleteAllObjects()
 ```
 
-### Sync Status
-If you want to track the sync status of an object with respect to say, a web service, you can additionally implement the `Syncable` protocol, which requires that your object has a sync status property:
-```swift
-    var syncStatus: SyncStatus = .undetermined
-```
-Garage Storage provides the following sync status options:
-```swift
-    .undetermined
-    .notSynced
-    .syncing
-    .synced 
-```
-Objects conforming to `Syncable` will have their sync status automatically set when they are parked in the Garage. However, you can also manually set the sync status:
-
-```swift
-    try garage.setSyncStatus(.syncing, for: myPerson)
-    try garage.setSyncStatus(.synced, for: [myBrother, mySister, myMom, myDad])
-```
-
-You can also query the sync status of an object in the garage:
-```swift
-    let status = try garage.syncStatus(for: myPerson)
-```
-
-And most importantly, you can retrieve objects from the garage based on sync status:
-```swift
-    let notSynced: [Person] = try garage.retrieveAll(withStatus: .notSynced)
-```
-
-The purpose of using Garage functions to get and set sync status is so that the Garage can properly manage the underlying Core Data objects. If you were to directly modify the sync status property of a `Mappable` object, the underlying Core Data object would not be updated in the Garage until it is parked again.
-
 ### Saving The Store
 
-Parking, deleting, or modifying the sync status of objects will automatically persist their changes to disk by default, because `isAutosaveEnabled` is set to `true` by default in a `Garage`. This means that any operation that modifies the garage will also trigger a save of the garage. If you don't want this enabled, then set `isAutosaveEnabled` to `false`, and then explicitly save the Garage by calling:
+Parking, deleting, or modifying objects will automatically persist their changes to disk by default, because `isAutosaveEnabled` is set to `true` by default in a `Garage`. This means that any operation that modifies the garage will also trigger a save of the garage. If you don't want this enabled, then set `isAutosaveEnabled` to `false`, and then explicitly save the Garage by calling:
 ```swift
     garage.save()
 ```

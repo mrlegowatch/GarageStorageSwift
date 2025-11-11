@@ -10,8 +10,7 @@ import Foundation
 import GarageStorage
 
 // In order to be a top-level type that is parked and retrieved in a garage, a type must conform to Mappable (a Codable with an identifier). This happens to be a reference type (class).
-// It may optionally implement Syncable.
-class SwiftPet: Mappable, Syncable {
+class SwiftPet: Mappable {
 
     // Map the identifier to a preferred property, if desired.
     var id: String { name }
@@ -20,14 +19,4 @@ class SwiftPet: Mappable, Syncable {
     var name: String = ""
     
     var age: Int = 0
-        
-    // Types with sync status need to skip syncStatus for coding, because it's archived
-    // separately in the underlying core data object, in order to fetch based on sync status.
-    private enum CodingKeys: String, CodingKey {
-        case name
-        case age
-    }
-    
-    // Syncable protocol
-    var syncStatus: SyncStatus = .notSynced
 }

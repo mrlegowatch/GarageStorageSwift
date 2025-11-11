@@ -30,7 +30,6 @@ extension XCTestCase {
         person.importantDates = [Date(), Date(timeIntervalSince1970: 0), Date(timeIntervalSince1970: 100)]
         person.brother = swiftPerson2()
         person.siblings = [person.brother!, swiftPerson3()]
-        person.syncStatus = .syncing
         
         return person
     }

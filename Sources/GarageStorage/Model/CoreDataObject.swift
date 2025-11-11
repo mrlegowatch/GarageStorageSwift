@@ -27,17 +27,6 @@ internal class CoreDataObject: NSManagedObject {
     @NSManaged public var gs_modifiedDate: Date?
     @NSManaged public var gs_syncStatus: NSNumber?
     
-    // Wrapper enum property for the underlying NSNumber property
-    var syncStatus: SyncStatus {
-        get {
-            guard let gsStatus = gs_syncStatus, let status = SyncStatus(rawValue: gsStatus.intValue) else { return .undetermined }
-            return status
-        }
-        set {
-            gs_syncStatus = NSNumber(value: newValue.rawValue)
-        }
-    }
-    
     // Wrapper for the underlying gs_data property, updates the modified date when set.
     var data: String {
         get {
@@ -66,17 +55,6 @@ internal class CoreDataObject: NSManagedObject {
         
         if let identifier = identifier {
             predicateString.append(" && \(Attribute.identifier) = \"\(identifier)\"")
-        }
-        
-        return NSPredicate(format: predicateString)
-    }
-    
-    // Predicate for fetching objects of a specific sync status, and optionally, a specified type.
-    static func predicate(for syncStatus: SyncStatus, type: String?) -> NSPredicate {
-        var predicateString = "\(Attribute.syncStatus) = \(syncStatus.rawValue)"
-        
-        if let type = type {
-            predicateString.append(" && \(Attribute.type) = \"\(type)\"")
         }
         
         return NSPredicate(format: predicateString)

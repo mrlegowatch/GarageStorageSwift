@@ -159,13 +159,6 @@ public class Garage {
         }
         return coreDataObject
     }
-
-    internal func fetchObjects(with syncStatus: SyncStatus, type: String?) throws -> [CoreDataObject] {
-        let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
-        fetchRequest.predicate = CoreDataObject.predicate(for: syncStatus, type: type)
-        
-        return try persistentContainer.viewContext.fetch(fetchRequest)
-    }
     
     // MARK: - Deleting
      

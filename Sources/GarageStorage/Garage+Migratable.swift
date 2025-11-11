@@ -97,12 +97,10 @@ internal extension KeyedDecodingContainer {
 // Wrapper for migrating a nested "anonymous" MappableObject to extract its data.
 private struct __AnonymousObjC: Decodable {
     let data: String
-    let syncStatus: Int?
     
     enum CodingKeys: String, CodingKey {
         // Ignore type and identifier, they're not necessary to determine anonymous data.
         case data = "kGSAnonymousDataKey"
-        case syncStatus = "gs_syncStatus"
     }
 }
 
@@ -122,12 +120,7 @@ public struct Migratable<Value: Decodable>: Decodable {
             guard let garage = decoder.garage else {
                 throw decoder.makeDecodingError("Failed to decode migratable object")
             }
-            var anonymous: Value = try garage.decodeData(anonymousObject.data)
-            
-            if var syncable = anonymous as? Syncable, let syncStatus = anonymousObject.syncStatus {
-                syncable.syncStatus = SyncStatus(rawValue: syncStatus)!
-                anonymous = syncable as! Value
-            }
+            let anonymous: Value = try garage.decodeData(anonymousObject.data)
             wrappedValue = anonymous
         } else {
             throw decoder.makeDecodingError("Failed to decode migratable object")
