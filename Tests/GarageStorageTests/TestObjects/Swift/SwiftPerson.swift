@@ -19,8 +19,7 @@ class SwiftPerson: Mappable, Syncable {
     // This example sets all properties to default values, so that an init() method is not required.
     var name: String = ""
     
-    // For testing migration from "ObjCAddress" to "SwiftyAddress", we wrap the address property with @Migratable.
-    @Migratable var address: SwiftAddress?
+    var address: SwiftAddress?
     var age: Int = 0
     var birthdate: Date = Date()
     var importantDates: [Date] = []

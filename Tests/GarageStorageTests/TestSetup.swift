@@ -7,7 +7,7 @@
 
 import Foundation
 
-@objc public class TestSetup: NSObject {
+public class TestSetup {
     
     static var timeZone = TimeZone(identifier: "UTC")!
     

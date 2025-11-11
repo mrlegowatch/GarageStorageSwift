@@ -181,18 +181,6 @@ catch {
 ```
 If for some specific reason you need to distinguish errors thrown from GarageStorage instead of Core Data, you can check the error's domain for `Garage.errorDomain`.
 
-## Working with Objective-C
-
-If you are initially using Garage Storage with a code base primarily in Objective-C, you may want to include the Objective-C compatible APIs.
-
-See details in <doc:WorkingWithObjectiveC>.
-
-## Migrating from Objective-C to Swift
-
-If you have been using Garage Storage with a mix of Objective-C and Swift code, you may want to migrate entirely to Swift.
-
-See details in <doc:MigratingToSwift>.
-
 ## Conclusion
 
 There's more that the Garage can do, including the ability to use your own `DataEncryptionDelegate` (which you can specify for encrypting your data), so poke around for more. Feature/Pull requests are always welcome. Have fun!

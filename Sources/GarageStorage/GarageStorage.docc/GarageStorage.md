@@ -46,15 +46,3 @@ Some applications require customization of the Core Data persistent store. The `
 
 - ``Swift/KeyedEncodingContainer``
 - ``Swift/KeyedDecodingContainer``
-
-### Mixing Objective-C and Swift
-
-- <doc:WorkingWithObjectiveC>
-- ``MappableObject``
-- ``ObjectMapping``
-- ``SyncableObject``
-
-### Migrating from Objective-C to Swift
-
-- <doc:MigratingToSwift>
-- ``Migratable``
