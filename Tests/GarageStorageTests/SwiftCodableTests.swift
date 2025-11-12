@@ -16,9 +16,6 @@ struct SwiftCodableTests {
     
     init() {
         TestSetup.classSetUp()
-        // Reset the underlying storage before running each test.
-        let garage = Garage(named: testStoreName)
-        garage.deleteAllObjects()
     }
     
     @Test("Identifiable objects can be parked and retrieved")

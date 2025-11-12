@@ -12,15 +12,10 @@ class TestCoreData: Codable { }
 
 final class RawStorageTests: XCTestCase {
 
-    override func setUpWithError() throws {
-        let garage = Garage(named: testStoreName)
-        garage.deleteAllObjects()
-    }
-
     /// Test what happens if a core data object is created, but its `gs_data` never got set.
     func testRawStorage() throws {
-        let garage = Garage(named: testStoreName)
-              
+        let garage = makeTestGarage()
+
         do {
             _ = garage.makeCoreDataObject("TestCoreData", identifier: "TestIdentifier")
             garage.save()

@@ -18,13 +18,7 @@ class TestableEdgeCaseTests: XCTestCase {
     override class func setUp() {
         TestSetup.classSetUp()
     }
-    
-    override func setUp() {
-        // Reset the underlying storage before running each test.
-        let garage = Garage(named: testStoreName)
-        garage.deleteAllObjects()
-    }
-        
+            
     func testDateFormatter() {
         
         let timeZone = TestSetup.timeZone
