@@ -6,8 +6,7 @@
 //  Copyright © 2024 Wellframe. All rights reserved.
 //
 
-import Foundation
-import GarageStorage
+import GarageStorage // for Mappable
 
 // In order to be a top-level type that is parked and retrieved in a garage, a type must conform to `Codable` and `Identifiable`. This happens to be a reference type (class). Here, we declare conformance to `Mappable`, a convenience protocol that combines `Codable` and `Identifiable`.
 class SwiftPet: Mappable {

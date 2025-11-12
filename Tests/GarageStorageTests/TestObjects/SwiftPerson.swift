@@ -6,8 +6,7 @@
 //  Copyright © 2019 Wellframe. All rights reserved.
 //
 
-import Foundation
-import GarageStorage
+import Foundation // For Date
 
 // In order to be a top-level type that is parked and retrieved in a garage, a type must conform to Codable and Identifiable. This happens to be a reference type (class).
 class SwiftPerson: Codable, Identifiable {

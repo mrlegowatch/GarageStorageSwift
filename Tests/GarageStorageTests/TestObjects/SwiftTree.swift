@@ -6,10 +6,9 @@
 //  Copyright © 2019 Wellframe. All rights reserved.
 //
 
-import Foundation
-import GarageStorage
+// NOTE: No imports
 
-// This class is used to test multiple references.
+// This class is used to test multiple Identifiable references.
 struct SwiftBranch: Codable, Identifiable {
     
     var id: String = ""
