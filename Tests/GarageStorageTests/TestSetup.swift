@@ -11,7 +11,7 @@ import CoreData
 
 public class TestSetup {
     
-    static var timeZone = TimeZone(identifier: "UTC")!
+    static let timeZone = TimeZone(identifier: "UTC")!
     
     static func classSetUp() {
         // Set the test time zone to UTC so that tests can compare with hardcoded UTC dates
