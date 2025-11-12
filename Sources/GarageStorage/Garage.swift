@@ -60,7 +60,7 @@ public class Garage {
         self.init(with: [description])
         
         loadPersistentStores { (description, error) in
-            if let error = error {
+            if let error {
                 print("An error occurred loading persistent store \(description), error: \(error)")
             }
         }
@@ -184,5 +184,4 @@ public class Garage {
         guard let objects = try? persistentContainer.viewContext.fetch(fetchRequest) else { return }
         deleteAll(objects)
     }
-
 }

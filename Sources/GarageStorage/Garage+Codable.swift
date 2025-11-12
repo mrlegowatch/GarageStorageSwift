@@ -8,17 +8,61 @@
 
 import Foundation
 
+// MARK: ISO Date decoding helper
+
+/// Function to pass into Decoder DateDecodingStrategy.custom(_) to enable parsing ISO Date.
+internal func decodeISODate(_ decoder: Decoder) throws -> Date {
+    let date: Date
+    
+    let container = try decoder.singleValueContainer()
+    
+    // Swift Codable encodes the date as a string directly
+    if let string = try? container.decode(String.self) {
+        date = Date.isoDate(for: string)!
+    } else {
+        let context = DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Failed to decode into Date")
+        throw DecodingError.dataCorrupted(context)
+    }
+    
+    return date
+}
+
+// MARK: - Codable Hooks for Identifiable references
+
+// The Swift runtime needs to provide a nudge for whether an about-to-be-saved
+// reference is an explicitly-parked object (an `Identifiable` with an `id`
+// conforming to `LosslessStringConvertible`), so the Garage is stored and
+// accessed via the encoder or decoder to ensure that they are parked
+// appropriately. Without this, the references would fail to be retrieved.
+// See Garage+CodableReference for the full implementation.
+
+private extension CodingUserInfoKey {
+    static let garage = CodingUserInfoKey(rawValue: "Garage")!
+}
+
+extension Encoder {
+    
+    /// The underlying Garage used by this Encoder, if specified.
+    var garage: Garage? { self.userInfo[.garage] as? Garage }
+}
+
+extension Decoder {
+    
+    /// The underlying Garage used by this Decoder, if specified.
+    var garage: Garage? { self.userInfo[.garage] as? Garage }
+}
+
+// MARK: - Garage Codable extensions
+
 extension Garage {
     
-    // MARK: - Core Data
-    
-    static let userInfoKey = CodingUserInfoKey(rawValue: "Garage")!
-    
+    // MARK: Core Data
+        
     internal func decodeData<T: Decodable>(_ string: String) throws -> T {
         let data: Data = try decrypt(string)
         
         let decoder = JSONDecoder()
-        decoder.userInfo[Garage.userInfoKey] = self
+        decoder.userInfo[.garage] = self
         decoder.dateDecodingStrategy = .custom(decodeISODate)
         
         return try decoder.decode(T.self, from: data)
@@ -26,14 +70,14 @@ extension Garage {
     
     internal func encodeData<T: Encodable>(_ object: T) throws -> String {
         let encoder = JSONEncoder()
-        encoder.userInfo[Garage.userInfoKey] = self
+        encoder.userInfo[.garage] = self
         encoder.dateEncodingStrategy = .formatted(Date.isoFormatter)
         let data = try encoder.encode(object)
         
         return try encrypt(data)
     }
     
-    // MARK: - Parking
+    // MARK: Parking
     
     @discardableResult
     internal func makeCoreDataObject<T: Encodable>(from object: T, identifier: String) throws -> CoreDataObject {
@@ -83,7 +127,7 @@ extension Garage {
         autosave()
     }
     
-    // MARK: - Retrieving
+    // MARK: Retrieving
     
     private func makeCodable<T: Decodable>(from coreDataObject: CoreDataObject) throws -> T {
         guard let data = coreDataObject.gs_data else {
@@ -128,7 +172,7 @@ extension Garage {
         return try makeCodableObjects(from: coreDataObjects)
     }
     
-    // MARK: - Deleting
+    // MARK: Deleting
     
     private func deleteCoreDataObject<T>(_ object: T, identifier: LosslessStringConvertible) throws {
         let identifier = String(identifier)

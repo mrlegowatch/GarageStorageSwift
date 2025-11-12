@@ -59,5 +59,4 @@ internal class CoreDataObject: NSManagedObject {
         
         return NSPredicate(format: predicateString)
     }
-    
 }

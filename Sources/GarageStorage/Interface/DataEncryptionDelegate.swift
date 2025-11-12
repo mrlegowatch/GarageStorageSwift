@@ -8,7 +8,7 @@
 
 import Foundation
 
-/// If your application requires data encryption at the object level, this protocol provides the relevant hooks for converting from unencrypted JSON `Data` to an encrypted `String` and back again. Implement this protocol and set the ``Garage/dataEncryptionDelegate`` property on the `Garage` to enable data encryption for stored objects.
+/// If your application requires data encryption at the object level, this optional protocol provides the relevant hooks for converting from unencrypted JSON `Data` to an encrypted `String` and back again. Implement this protocol and set the ``Garage/dataEncryptionDelegate`` property on the `Garage` to enable data encryption for stored objects.
 public protocol DataEncryptionDelegate: AnyObject {
     
     /// This is called when the Core Data object's underlying data is about to be stored. Provide an implementation that encrypts the JSON data to a string.
