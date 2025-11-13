@@ -20,6 +20,10 @@ public class Garage {
     
     private let persistentContainer: NSPersistentContainer
 
+    internal var context: NSManagedObjectContext {
+        persistentContainer.viewContext
+    }
+    
     /// An optional delegate for serializing/deserializing stored data. Specify this to add encryption to the stored data.
     public weak var dataEncryptionDelegate: DataEncryptionDelegate?
 
@@ -94,11 +98,9 @@ public class Garage {
     
     // MARK: - Saving
     
-    /// Saves all changes to the Garage's persistent store. This will not affect in-memory objects. It is not necessary to call this while autosave is enabled.
-    ///
-    /// This only needs to be called if `isAutosaveEnabled` is set to `false`. No error is returned, but diagnostic text will be output to the console if an error occurs.
-    public func save() {
-        let context = persistentContainer.viewContext
+    /// Saves all changes to the Garage's persistent store.
+    /// Must be called from within context.performAndWait.
+    private func saveContext() {
         guard context.hasChanges else { return }
         do {
             try context.save()
@@ -106,25 +108,39 @@ public class Garage {
             print("Error saving managed object context: \(error), \(error.userInfo)")
         }
     }
-    
-    internal func autosave() {
-        if isAutosaveEnabled {
-            save()
+        
+    /// Saves all changes to the Garage's persistent store. This will not affect in-memory objects. It is not necessary to call this while autosave is enabled.
+    ///
+    /// This only needs to be called if `isAutosaveEnabled` is set to `false`. No error is returned, but diagnostic text will be output to the console if an error occurs.
+    public func save() {
+        context.performAndWait {
+            saveContext()
         }
     }
+    
+    /// Checks if autosave is enabled, and if so, performs a save.
+    /// Must be called from within context.performAndWait.
+    internal func autosave() {
+        guard isAutosaveEnabled else { return }
+        saveContext()
+    }
 
+    /// Encrypts the data using the dataEncryptionDelegate, if specified, otherwise converts the data to a plain string.
     internal func encrypt(_ data: Data) throws -> String {
         return try dataEncryptionDelegate?.encrypt(data) ?? String(data: data, encoding: .utf8)!
     }
     
+    /// Decrypts the string using the dataEncryptionDelegate, if specified, otherwise converts the string to plain data.
     internal func decrypt(_ string: String) throws -> Data {
         return try dataEncryptionDelegate?.decrypt(string) ?? string.data(using: .utf8)!
     }
 
     // MARK: - Parking
     
+    /// Returns a new Core Data object with the type and identifier filled in.
+    /// Must be called from within context.performAndWait.
     internal func makeCoreDataObject(_ type: String, identifier: String) -> CoreDataObject {
-         let newObject = NSEntityDescription.insertNewObject(forEntityName: CoreDataObject.entityName, into: persistentContainer.viewContext) as! CoreDataObject
+         let newObject = NSEntityDescription.insertNewObject(forEntityName: CoreDataObject.entityName, into: context) as! CoreDataObject
          
          newObject.gs_type = type
          newObject.gs_identifier = identifier
@@ -133,26 +149,34 @@ public class Garage {
          return newObject
      }
 
+    // MARK: - Retrieving
+
+    /// Fetches the Core Data object matching the type and identifier, and creates a new object if one has not been created yet.
+    /// Must be called from within context.performAndWait.
     internal func retrieveCoreDataObject(for type: String, identifier: String) -> CoreDataObject {
         return fetchObject(for: type, identifier: identifier) ?? makeCoreDataObject(type, identifier: identifier)
     }
     
-    // MARK: - Retrieving
-    
+    /// Fetches an array of Core Data objects matching the type and identifier (if specifed). Returns an empty array if none are found.
+    /// Must be called from within context.performAndWait.
     internal func fetchObjects(for type: String, identifier: String?) -> [CoreDataObject] {
         let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
         fetchRequest.predicate = CoreDataObject.predicate(for: type, identifier: identifier)
-        let fetchedObjects = try? persistentContainer.viewContext.fetch(fetchRequest)
+        let fetchedObjects = try? context.fetch(fetchRequest)
         
         return fetchedObjects ?? []
     }
     
+    /// Fetches the first Core Data object matching the type and identifier, and returns nil if not found.
+    /// Must be called from within context.performAndWait.
     internal func fetchObject(for type: String, identifier: String?) -> CoreDataObject? {
         let fetchedObjects = fetchObjects(for: type, identifier: identifier)
         
         return fetchedObjects.count > 0 ? fetchedObjects[0] : nil
     }
     
+    /// Fetches the first Core Data object matching the type and identifier. Throws an error if not found.
+    /// Must be called from within context.performAndWait.
     internal func fetchCoreDataObject(for type: String, identifier: String) throws -> CoreDataObject {
         guard let coreDataObject = fetchObject(for: type, identifier: identifier) else {
             throw Garage.makeError("failed to retrieve object of class: \(type) identifier: \(identifier)")
@@ -162,17 +186,21 @@ public class Garage {
     
     // MARK: - Deleting
      
+    /// Deletes the Core Data object, and performs an autosave.
+    /// Must be called from within context.performAndWait.
     internal func delete(_ object: CoreDataObject) throws {
-        persistentContainer.viewContext.delete(object)
+        context.delete(object)
         
         autosave()
     }
 
+    /// Deletes the array of Core Data objects, and performs an autosave.
+    /// Must be called from within context.performAndWait.
     internal func deleteAll(_ objects: [CoreDataObject]) {
         guard objects.count > 0 else { return }
         
         for object in objects {
-            persistentContainer.viewContext.delete(object)
+            context.delete(object)
         }
         
         autosave()
@@ -180,8 +208,10 @@ public class Garage {
     
     /// Deletes all objects from the Garage.
     public func deleteAllObjects() {
-        let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
-        guard let objects = try? persistentContainer.viewContext.fetch(fetchRequest) else { return }
-        deleteAll(objects)
+        context.performAndWait {
+            let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
+            guard let objects = try? context.fetch(fetchRequest) else { return }
+            deleteAll(objects)
+        }
     }
 }
