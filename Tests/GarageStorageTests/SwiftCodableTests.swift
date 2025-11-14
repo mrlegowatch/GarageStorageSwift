@@ -303,4 +303,59 @@ struct SwiftCodableTests {
         #expect(retrievedEmily != nil, "Emily should be retrievable after manual save")
         #expect(retrievedEmily?.name == "Emily", "Retrieved Emily should have correct name")
     }
+
+    @Test("Convenience initializer creates garage with named store")
+    func convenienceInitializer() throws {
+        // Use the convenience initializer that creates a garage with a named store
+        let garage = Garage(named: "TestGarage")
+        
+        // Verify the garage is functional by parking and retrieving an object
+        let sam = swiftPerson()
+        try garage.park(sam)
+        
+        let retrievedSam = try #require(try garage.retrieve(SwiftPerson.self, identifier: "Sam"))
+        #expect(retrievedSam.name == "Sam", "Expected Sam to be Sam")
+        #expect(retrievedSam.importantDates.count == 3, "Expected 3 important dates")
+        
+        // Clean up
+        garage.deleteAllObjects()
+    }
+
+    @Test("Hashable park and delete")
+    func hashableParkAndDelete() throws {
+        let garage = makeTestGarage()
+        
+        // Create and park addresses using Hashable methods
+        let address1 = swiftAddress()
+        let address2 = swiftAddress2()
+        try garage.park(address1)
+        try garage.park(address2)
+        
+        // Retrieve addresses using their hashValue
+        let retrievedAddress1 = try #require(try garage.retrieve(SwiftAddress.self, identifier: address1.hashValue))
+        #expect(retrievedAddress1.street == "330 Congress St.", "expected street to match")
+        #expect(retrievedAddress1.city == "Boston", "expected city to match")
+        #expect(retrievedAddress1.zip == "02140", "expected zip to match")
+        
+        let retrievedAddress2 = try #require(try garage.retrieve(SwiftAddress.self, identifier: address2.hashValue))
+        #expect(retrievedAddress2.street == "321 Summer Street", "expected street to match")
+        
+        // Delete first address using Hashable delete method
+        try garage.delete(address1)
+        
+        // Confirm first address is deleted
+        let deletedAddress = try? garage.retrieve(SwiftAddress.self, identifier: address1.hashValue)
+        #expect(deletedAddress == nil, "First address should be deleted")
+        
+        // Confirm second address still exists
+        let stillExistingAddress = try #require(try garage.retrieve(SwiftAddress.self, identifier: address2.hashValue))
+        #expect(stillExistingAddress == address2, "Second address should still exist")
+        
+        // Delete second address
+        try garage.delete(address2)
+        
+        // Confirm both addresses are now deleted
+        let allAddresses = try garage.retrieveAll(SwiftAddress.self)
+        #expect(allAddresses.count == 0, "All addresses should be deleted")
+    }
 }
