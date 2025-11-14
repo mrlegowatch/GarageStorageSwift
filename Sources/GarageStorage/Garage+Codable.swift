@@ -188,22 +188,16 @@ extension Garage {
     
     // MARK: Deleting
     
-    /// Deletes the specified object's associated Core Data object from the garage.
-    /// Must be called from within context.performAndWait.
-    private func deleteCoreDataObject<T>(_ object: T, identifier: LosslessStringConvertible) throws {
-        let identifier = String(identifier)
-        let typeName = String(describing: T.self)
-        let coreDataObject = try fetchCoreDataObject(for: typeName, identifier: identifier)
-        try delete(coreDataObject)
-    }
-        
     /// Deletes an object conforming to `Identifiable` from the Garage.
     ///
     /// - parameter object: An object conforming to `Identifiable`, where the `ID` is `LosslessStringConvertible`.
     public func delete<T: Identifiable>(_ object: T) throws where T.ID: LosslessStringConvertible {
         let identifier = String(object.id)
+        let typeName = String(describing: T.self)
         try context.performAndWait {
-            try deleteCoreDataObject(object, identifier: identifier)
+            try deleteCoreDataObject(for: typeName, identifier: identifier)
+            
+            autosave()
         }
     }
  
@@ -212,8 +206,11 @@ extension Garage {
     /// - parameter object: An object conforming to `Hashable`.
     public func delete<T: Hashable>(_ object: T) throws {
         let identifier = "\(object.hashValue)"
+        let typeName = String(describing: T.self)
         try context.performAndWait {
-            try deleteCoreDataObject(object, identifier: identifier)
+            try deleteCoreDataObject(for: typeName, identifier: identifier)
+            
+            autosave()
         }
     }
 
@@ -225,6 +222,8 @@ extension Garage {
         context.performAndWait {
             let coreDataObjects = fetchObjects(for: typeName, identifier: nil)
             deleteAll(coreDataObjects)
+            
+            autosave()
         }
     }
 }

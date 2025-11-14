@@ -185,16 +185,15 @@ public class Garage {
     }
     
     // MARK: - Deleting
-     
-    /// Deletes the Core Data object, and performs an autosave.
+    
+    /// Deletes the Core Data object. Used by Garage+Codable.
     /// Must be called from within context.performAndWait.
-    internal func delete(_ object: CoreDataObject) throws {
-        context.delete(object)
-        
-        autosave()
+    internal func deleteCoreDataObject(for typeName: String, identifier: String) throws {
+        let coreDataObject = try fetchCoreDataObject(for: typeName, identifier: identifier)
+        context.delete(coreDataObject)
     }
 
-    /// Deletes the array of Core Data objects, and performs an autosave.
+    /// Deletes the array of Core Data objects. Used by Garage+Codable and by deleteAllObjects
     /// Must be called from within context.performAndWait.
     internal func deleteAll(_ objects: [CoreDataObject]) {
         guard objects.count > 0 else { return }
@@ -202,16 +201,16 @@ public class Garage {
         for object in objects {
             context.delete(object)
         }
-        
-        autosave()
     }
     
-    /// Deletes all objects from the Garage.
+    /// Deletes all objects from the Garage and performs an autosave.
     public func deleteAllObjects() {
         context.performAndWait {
             let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
             guard let objects = try? context.fetch(fetchRequest) else { return }
             deleteAll(objects)
+            
+            autosave()
         }
     }
 }
