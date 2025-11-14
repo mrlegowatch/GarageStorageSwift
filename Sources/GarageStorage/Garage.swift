@@ -230,13 +230,23 @@ public class Garage {
     }
     
     /// Deletes all objects from the Garage and performs an autosave.
-    public func deleteAllObjects() {
-        context.performAndWait {
+    /// This operation is performed on a background thread.
+    ///
+    /// - parameter completion: An optional closure that is called after the deletion completes. This closure is called on the main thread.
+    public func deleteAllObjects(completion: (() -> Void)? = nil) {
+        context.perform {
             let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
-            guard let objects = try? context.fetch(fetchRequest) else { return }
-            deleteAll(objects)
+            guard let objects = try? self.context.fetch(fetchRequest) else {
+                DispatchQueue.main.async {
+                    completion?()
+                }
+                return
+            }
+            self.deleteAll(objects)
+            self.autosave()
+            DispatchQueue.main.async {
+                completion?()
+            }
         }
-        
-        autosave()
     }
 }
