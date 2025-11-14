@@ -79,9 +79,9 @@ extension Garage {
     public func park<T: Encodable & Identifiable>(_ object: T) throws where T.ID: LosslessStringConvertible {
         try context.performAndWait {
             try parkEncodable(from: object, identifier: String(object.id))
-            
-            autosave()
         }
+        
+        autosave()
     }
     
     /// Adds an object that conforms to `Codable` and `Hashable` to the Garage.
@@ -90,9 +90,9 @@ extension Garage {
     public func park<T: Encodable & Hashable>(_ object: T) throws {
         try context.performAndWait {
             try parkEncodable(from: object, identifier: "\(object.hashValue)")
-           
-            autosave()
         }
+        
+        autosave()
     }
     
     /// Adds an array of Encodable and Identifiable objects to the Garage.
@@ -109,9 +109,9 @@ extension Garage {
     public func parkAll<T: Encodable & Identifiable>(_ objects: [T]) throws where T.ID: LosslessStringConvertible {
         try context.performAndWait {
             try parkAllEncodables(objects)
-            
-            autosave()
         }
+        
+        autosave()
     }
     
     /// Adds an array of objects that conform to `Codable` and `Hashable` to the Garage.
@@ -122,9 +122,9 @@ extension Garage {
             for object in objects {
                 try parkEncodable(from: object, identifier: "\(object.hashValue)")
             }
-            
-            autosave()
         }
+        
+        autosave()
     }
     
     // MARK: Retrieving
@@ -196,9 +196,9 @@ extension Garage {
         let typeName = String(describing: T.self)
         try context.performAndWait {
             try deleteCoreDataObject(for: typeName, identifier: identifier)
-            
-            autosave()
         }
+        
+        autosave()
     }
  
     /// Deletes an object conforming to `Hashable` from the Garage.
@@ -209,9 +209,9 @@ extension Garage {
         let typeName = String(describing: T.self)
         try context.performAndWait {
             try deleteCoreDataObject(for: typeName, identifier: identifier)
-            
-            autosave()
         }
+        
+        autosave()
     }
 
     /// Deletes all objects of the specified type `T` from the Garage.
@@ -222,8 +222,8 @@ extension Garage {
         context.performAndWait {
             let coreDataObjects = fetchObjects(for: typeName, identifier: nil)
             deleteAll(coreDataObjects)
-            
-            autosave()
         }
+        
+        autosave()
     }
 }

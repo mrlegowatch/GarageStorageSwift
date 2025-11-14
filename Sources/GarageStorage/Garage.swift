@@ -99,7 +99,7 @@ public class Garage {
     // MARK: - Saving
     
     /// Saves all changes to the Garage's persistent store.
-    /// Must be called from within context.performAndWait.
+    /// Must be called from within context.perform or context.performAndWait.
     private func saveContext() {
         guard context.hasChanges else { return }
         do {
@@ -113,16 +113,42 @@ public class Garage {
     ///
     /// This only needs to be called if `isAutosaveEnabled` is set to `false`. No error is returned, but diagnostic text will be output to the console if an error occurs.
     public func save() {
-        context.performAndWait {
-            saveContext()
+        context.perform {
+            self.saveContext()
         }
     }
     
     /// Checks if autosave is enabled, and if so, performs a save.
-    /// Must be called from within context.performAndWait.
     internal func autosave() {
         guard isAutosaveEnabled else { return }
-        saveContext()
+        context.perform {
+            self.saveContext()
+        }
+    }
+    
+    /// Temporarily disables autosave while executing the provided closure, then restores the previous autosave state.
+    ///
+    /// This is useful for performing batch operations where you want to defer saving until all changes are complete. The autosave state is automatically restored even if the closure throws an error.
+    ///
+    /// - parameter closure: A closure to execute with autosave disabled. If the closure throws, the error is propagated after restoring the autosave state.
+    /// - throws: Rethrows any error thrown by the closure.
+    ///
+    /// Example usage:
+    /// ```swift
+    /// try garage.withAutosaveDisabled {
+    ///     try garage.park(person1)
+    ///     try garage.park(person2)
+    ///     try garage.park(person3)
+    /// }
+    /// garage.save() // Manually save after batch operations
+    /// ```
+    public func withAutosaveDisabled<Result>(_ closure: () throws -> Result) rethrows -> Result {
+        let previousState = isAutosaveEnabled
+        isAutosaveEnabled = false
+        defer {
+            isAutosaveEnabled = previousState
+        }
+        return try closure()
     }
 
     /// Encrypts the data using the dataEncryptionDelegate, if specified, otherwise converts the data to a plain string.
@@ -209,8 +235,8 @@ public class Garage {
             let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
             guard let objects = try? context.fetch(fetchRequest) else { return }
             deleteAll(objects)
-            
-            autosave()
         }
+        
+        autosave()
     }
 }

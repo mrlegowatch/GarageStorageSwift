@@ -272,4 +272,35 @@ struct SwiftCodableTests {
         #expect(decodedSam.brother != nil, "brother")
         #expect(decodedSam.siblings.count == 2, "siblings")
     }
+    
+    @Test("Autosave disabled requires manual save")
+    func autosaveDisabled() throws {
+        let garage = makeTestGarage()
+        
+        // Verify autosave is enabled by default
+        #expect(garage.isAutosaveEnabled == true, "Autosave should be enabled by default")
+        
+        // Create and park people using withAutosaveDisabled
+        try garage.withAutosaveDisabled {
+            let nick = swiftPerson2()
+            let emily = swiftPerson3()
+            try garage.park(nick)
+            try garage.park(emily)
+        }
+        
+        // Verify autosave is re-enabled after the closure
+        #expect(garage.isAutosaveEnabled == true, "Autosave should be re-enabled after closure")
+        
+        // Now manually save the garage
+        garage.save()
+        
+        // Retrieve the objects to verify they were saved
+        let retrievedNick = try? garage.retrieve(SwiftPerson.self, identifier: "Nick")
+        #expect(retrievedNick != nil, "Object should be retrievable after manual save")
+        #expect(retrievedNick?.name == "Nick", "Retrieved object should have correct name")
+        
+        let retrievedEmily = try? garage.retrieve(SwiftPerson.self, identifier: "Emily")
+        #expect(retrievedEmily != nil, "Emily should be retrievable after manual save")
+        #expect(retrievedEmily?.name == "Emily", "Retrieved Emily should have correct name")
+    }
 }
