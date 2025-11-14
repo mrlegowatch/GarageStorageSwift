@@ -273,6 +273,29 @@ struct SwiftCodableTests {
         #expect(decodedSam.siblings.count == 2, "siblings")
     }
     
+    @Test("Identifiable with non-optional reference can be encoded to pure JSON")
+    func pureSwiftCodableWithNonOptionalReference() throws {
+        // No garage - this tests the decodeDefault code path
+        
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        
+        // Create a person with a non-optional parent reference
+        let child = swiftPersonWithParent()
+        
+        let data = try encoder.encode(child)
+        
+        // For debugging:
+        //let string = String(data: data, encoding: .utf8)!
+        //print(string)
+        
+        let decoder = JSONDecoder()
+        let decodedChild = try decoder.decode(SwiftPersonWithParent.self, from: data)
+        #expect(decodedChild.name == "Child", "child name")
+        #expect(decodedChild.parent.name == "Nick", "parent name")
+        #expect(decodedChild.parent.age == 26, "parent age")
+    }
+    
     @Test("Autosave disabled requires manual save")
     func autosaveDisabled() throws {
         let garage = makeTestGarage()

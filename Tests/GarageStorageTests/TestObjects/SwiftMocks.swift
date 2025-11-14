@@ -57,3 +57,10 @@ func swiftPet2() -> SwiftPet {
     pet.age = 5
     return pet
 }
+
+func swiftPersonWithParent() -> SwiftPersonWithParent {
+    let person = SwiftPersonWithParent()
+    person.name = "Child"
+    person.parent = swiftPerson2()
+    return person
+}
