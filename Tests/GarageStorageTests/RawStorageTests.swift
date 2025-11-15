@@ -31,7 +31,5 @@ struct RawStorageTests {
             // we want to catch the error, and verify it
             #expect(error.localizedDescription.contains("failed to retrieve gs_data"))
         }
-        
     }
-
 }
