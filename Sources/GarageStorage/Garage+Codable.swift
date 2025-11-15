@@ -47,7 +47,7 @@ extension Garage {
         
         let decoder = JSONDecoder()
         decoder.userInfo[.garage] = self
-        decoder.dateDecodingStrategy = .custom(decodeTransformableDate)
+        decoder.dateDecodingStrategy = self.dateDecodingStrategy
         
         return try decoder.decode(T.self, from: data)
     }
@@ -57,7 +57,7 @@ extension Garage {
     internal func encodeData<T: Encodable>(_ object: T) throws -> String {
         let encoder = JSONEncoder()
         encoder.userInfo[.garage] = self
-        encoder.dateEncodingStrategy = .formatted(Date.isoFormatter)
+        encoder.dateEncodingStrategy = self.dateEncodingStrategy
         let data = try encoder.encode(object)
         
         return try encrypt(data)

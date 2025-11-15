@@ -28,8 +28,9 @@ internal func decodeTransformableDate(_ decoder: Decoder) throws -> Date {
     
     // Swift Codable encodes the date as a string directly
     // Objective-C MappableObject encodes a dictionary of transformable type
-    if let string = try? container.decode(String.self) {
-        date = Date.isoDate(for: string)!
+    if let string = try? container.decode(String.self),
+       let isoDate = Date.isoDate(for: string) {
+        date = isoDate
     } else if let transformableDate = try? container.decode(__TransformableDateObjC.self) {
         date = transformableDate.date
     } else {
