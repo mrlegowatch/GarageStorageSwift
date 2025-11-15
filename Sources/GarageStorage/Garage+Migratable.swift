@@ -33,64 +33,21 @@ internal func decodeTransformableDate(_ decoder: Decoder) throws -> Date {
     } else if let transformableDate = try? container.decode(__TransformableDateObjC.self) {
         date = transformableDate.date
     } else {
-        throw decoder.makeDecodingError("Failed to decode into Date")
+        let description = "Failed to decode into Date"
+        let context = DecodingError.Context(codingPath: decoder.codingPath, debugDescription: description)
+        throw DecodingError.dataCorrupted(context)
     }
     
     return date
 }
 
 // Wrapper for migrating a referenced MappableObject with "identifiableAttribute" to a reference id.
-private struct __ReferenceObjC: Decodable {
+internal struct __ReferenceObjC: Decodable {
     let id: String
     
     enum CodingKeys: String, CodingKey {
         // Ignore type, it's not necessary to determine a reference.
         case id = "gs_identifier"
-    }
-}
-
-// Extension that enables automatic decoding of Mappable references with identifyingAttributes,
-// including in-place migration from MappableObject references.
-internal extension KeyedDecodingContainer {
-
-    func decodeReferenceIfPresent(forKey key: KeyedDecodingContainer<K>.Key) throws -> String? {
-        let reference: String?
-        
-        // Swift Codable encodes the identifier directly
-        // Objective-C MappableObject encodes a dictionary of identifier and non-anonymous type
-        if let identifier = try? decodeIfPresent(String.self, forKey: key) {
-            reference = identifier
-        } else if let referenceObject = try? decodeIfPresent(__ReferenceObjC.self, forKey: key) {
-            reference = referenceObject.id
-        } else {
-            reference = nil
-        }
-        
-        return reference
-    }
-
-    func decodeReference(forKey key: KeyedDecodingContainer<K>.Key) throws -> String {
-        guard let reference = try decodeReferenceIfPresent(forKey: key) else {
-            throw try superDecoder().makeDecodingError("Failed to decode Mappable reference")
-        }
-        
-        return reference
-    }
-    
-    func decodeReferencesIfPresent(forKey key: KeyedDecodingContainer<K>.Key) throws -> [String] {
-        let references: [String]
-        
-        // Swift Codable encodes the array of identifiers directly
-        // Objective-C MappableObjects encode an array of dictionaries of identifier and type
-        if let identifiers = try? decodeIfPresent([String].self, forKey: key) {
-            references = identifiers
-        } else if let dictionaries = try? decodeIfPresent([[String:String]].self, forKey: key) {
-            references = dictionaries.map { $0[CoreDataObject.Attribute.identifier]! }
-        } else {
-            references = []
-        }
-        
-        return references
     }
 }
 
@@ -120,7 +77,9 @@ public struct Migratable<Value: Decodable>: Decodable {
             wrappedValue = decoded
         } else if let anonymousObject = try? __AnonymousObjC(from: decoder) {
             guard let garage = decoder.garage else {
-                throw decoder.makeDecodingError("Failed to decode migratable object")
+                let description = "Failed to decode migratable object"
+                let context = DecodingError.Context(codingPath: decoder.codingPath, debugDescription: description)
+                throw DecodingError.dataCorrupted(context)
             }
             var anonymous: Value = try garage.decodeData(anonymousObject.data)
             
@@ -130,7 +89,9 @@ public struct Migratable<Value: Decodable>: Decodable {
             }
             wrappedValue = anonymous
         } else {
-            throw decoder.makeDecodingError("Failed to decode migratable object")
+            let description = "Failed to decode migratable object"
+            let context = DecodingError.Context(codingPath: decoder.codingPath, debugDescription: description)
+            throw DecodingError.dataCorrupted(context)
         }
     }
 }
@@ -158,21 +119,23 @@ extension Garage {
     /// - parameter oldClassName: The old class name.
     /// - parameter newType: The new object type.
     public func migrateAll<T: Codable>(fromOldClassName oldClassName: String, to newType: T.Type) throws {
-        let coreDataObjects = fetchObjects(for: oldClassName, identifier: nil)
-        guard coreDataObjects.count > 0 else { return }
-       
-        // First, change the types all at once, for decodeData's recursive calls to retrieve() to work.
-        let newClassName = String(describing: T.self)
-        for coreDataObject in coreDataObjects {
-            coreDataObject.gs_type = newClassName
+        try context.performAndWait {
+            let coreDataObjects = fetchObjects(for: oldClassName, identifier: nil)
+            guard coreDataObjects.count > 0 else { return }
+            
+            // First, change the types all at once, for decodeData's recursive calls to retrieve() to work.
+            let newClassName = String(describing: T.self)
+            for coreDataObject in coreDataObjects {
+                coreDataObject.gs_type = newClassName
+            }
+            
+            // Then, decode the old data directly, and re-encode it in the more Swift-friendly Codable format.
+            for coreDataObject in coreDataObjects {
+                let codable: T = try decodeData(coreDataObject.data)
+                coreDataObject.data = try encodeData(codable)
+            }
         }
         
-        // Then, decode the old data directly, and re-encode it in the more Swift-friendly Codable format.
-        for coreDataObject in coreDataObjects {
-            let codable: T = try decodeData(coreDataObject.data)
-            coreDataObject.data = try encodeData(codable)
-        }
-                
         autosave()
     }
 }

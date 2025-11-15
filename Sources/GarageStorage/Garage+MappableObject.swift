@@ -309,8 +309,10 @@ extension Garage {
     ///
     /// - parameter object: An object that conforms to ``MappableObject``.
     public func parkObject(_ object: MappableObject) throws {
-        try makeCoreDataObject(from: object)
-
+        try context.performAndWait {
+            try makeCoreDataObject(from: object)
+        }
+        
         autosave()
     }
 
@@ -321,6 +323,7 @@ extension Garage {
     /// - parameter object: An object that conforms to ``MappableObject``
     @objc(parkObjectInGarage:error:)
     public func __parkObjectObjC(_ object: MappableObject?) throws {
+        // This public function does not call context.performAndWait or autosave() because it calls another public function that does.
         guard let object = object else {
             throw Garage.makeError("nil passed to parkObject")
         }
@@ -335,8 +338,10 @@ extension Garage {
     /// - parameter objects: An array of objects conforming to ``MappableObject``.
     @objc(parkObjectsInGarage:error:)
     public func parkObjects(_ objects: [MappableObject]) throws {
-        for object in objects {
-            try makeCoreDataObject(from: object)
+        try context.performAndWait {
+            for object in objects {
+                try makeCoreDataObject(from: object)
+            }
         }
         
         autosave()
@@ -359,7 +364,10 @@ extension Garage {
     ///
     /// - returns: An object of class `T`, or nil if it was not found.
     public func retrieveObject<T: MappableObject>(_ objectClass: T.Type, identifier: String) throws -> T? {
-        return try retrieveMappableObject(objectClass.self, identifier: identifier) as? T
+        let objectClass: AnyClass = objectClass.self
+        return try context.performAndWait {
+            return try retrieveMappableObject(objectClass, identifier: identifier) as? T
+        }
     }
 
     /// **Objective-C Only:** Retrieves an object of the specified class conforming to ``MappableObject`` with the specified identifier from the Garage.
@@ -370,12 +378,14 @@ extension Garage {
     /// - returns: An object of the specified class.
     @objc(retrieveObjectOfClass:identifier:error:)
     public func __retrieveObjectObjC(_ objectClass: AnyClass, identifier: String) throws -> Any {
-        guard let object = try retrieveMappableObject(objectClass, identifier: identifier) else {
-            // This "throws" an error in order for the return value to be nil in Objective-C.
-            let className = NSStringFromClass(objectClass)
-            throw Garage.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
+        return try context.performAndWait {
+            guard let object = try retrieveMappableObject(objectClass, identifier: identifier) else {
+                // This "throws" an error in order for the return value to be nil in Objective-C.
+                let className = NSStringFromClass(objectClass)
+                throw Garage.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
+            }
+            return object
         }
-        return object
     }
 
     private func makeMappableObjects(from coreDataObjects: [CoreDataObject]) throws -> [MappableObject] {
@@ -401,7 +411,10 @@ extension Garage {
     ///
     /// - returns: An array of objects of class `objectClass`. If no objects are found, an empty array is returned.
     public func retrieveAllObjects<T: MappableObject>(_ objectClass: T.Type) throws -> [T] {
-        return try retrieveAllMappableObjects(objectClass.self) as!  [T]
+        let objectClass: AnyClass = objectClass.self
+        return try context.performAndWait {
+            return try retrieveAllMappableObjects(objectClass.self) as!  [T]
+        }
     }
 
     /// **Objective-C Only:** Retrieves all objects of the specified class conforming to ``MappableObject`` from the Garage.
@@ -411,7 +424,9 @@ extension Garage {
     /// - returns: An array of objects of class `objectClass`. If no objects are found, an empty array is returned.
     @objc(retrieveAllObjectsOfClass:error:)
     public func __retrieveAllObjectsObjC(_ objectClass: AnyClass) throws -> [Any] {
-        return try retrieveAllMappableObjects(objectClass)
+        return try context.performAndWait {
+            return try retrieveAllMappableObjects(objectClass)
+        }
     }
 
     // MARK: - Sync Status
@@ -429,7 +444,9 @@ extension Garage {
     /// - throws: if not successful.
     @objc(setSyncStatus:forObject:error:)
     public func setSyncStatus(_ syncStatus: SyncStatus, for object: MappableObject) throws {
-        try updateCoreDataSyncStatus(syncStatus, for: object)
+        try context.performAndWait {
+            try updateCoreDataSyncStatus(syncStatus, for: object)
+        }
         
         autosave()
     }
@@ -442,8 +459,10 @@ extension Garage {
     /// - throws: true if successful (syncStatus was set on all), false if not. Note: Even if this returns false, there still could be objects with their syncStatus was set successfully. A false response simply indicates a minimum of 1 failure.
     @objc(setSyncStatus:forObjects:error:)
     public func setSyncStatus(_ syncStatus: SyncStatus, for objects: [MappableObject]) throws {
-        for object in objects {
-            try updateCoreDataSyncStatus(syncStatus, for: object)
+        try context.performAndWait {
+            for object in objects {
+                try updateCoreDataSyncStatus(syncStatus, for: object)
+            }
         }
         
         autosave()
@@ -455,8 +474,10 @@ extension Garage {
     ///
     /// - returns: The ``SyncStatus``.
     public func syncStatus(for object: MappableObject) throws -> SyncStatus {
-        let coreDataObject = try fetchCoreDataObject(for: object)
-        return coreDataObject.syncStatus
+        try context.performAndWait {
+            let coreDataObject = try fetchCoreDataObject(for: object)
+            return coreDataObject.syncStatus
+        }
     }
 
     /// Returns all the objects conforming to``MappableObject`` that have the specified sync status.
@@ -466,9 +487,10 @@ extension Garage {
     /// - returns: An array of objects with the specified `syncStatus`. If no objects are found, an empty array is returned.
     @objc(retrieveObjectsWithSyncStatus:error:)
     public func retrieveObjects(withStatus syncStatus: SyncStatus) throws -> [MappableObject] {
-        let coreDataObjects = try fetchObjects(with: syncStatus, type: nil)
-        
-        return try makeMappableObjects(from: coreDataObjects)
+        return try context.performAndWait {
+            let coreDataObjects = try fetchObjects(with: syncStatus, type: nil)
+            return try makeMappableObjects(from: coreDataObjects)
+        }
     }
     
     /// Returns all the objects conforming to ``MappableObject`` of the specified class that have the specified sync status.
@@ -480,9 +502,10 @@ extension Garage {
     @objc(retrieveObjectsWithSyncStatus:ofClass:error:)
     public func retrieveObjects(withStatus syncStatus: SyncStatus, ofClass objectClass: AnyClass) throws -> [MappableObject] {
         let className = NSStringFromClass(objectClass)
-        let coreDataObjects = try fetchObjects(with: syncStatus, type: className)
-        
-        return try makeMappableObjects(from: coreDataObjects)
+        return try context.performAndWait {
+            let coreDataObjects = try fetchObjects(with: syncStatus, type: className)
+            return try makeMappableObjects(from: coreDataObjects)
+        }
     }
 
     // MARK: - Deleting
@@ -494,8 +517,10 @@ extension Garage {
     /// - parameter object:    An object conforming to ``MappableObject``
     @objc(deleteObjectFromGarage:error:)
     public func deleteObject(_ object: MappableObject) throws {
-        let coreDataObject = try fetchCoreDataObject(for: object)
-        try delete(coreDataObject)
+        try context.performAndWait {
+            let coreDataObject = try fetchCoreDataObject(for: object)
+            context.delete(coreDataObject)
+        }
     }
 
     /// Deletes all objects of the specified class conforming to ``MappableObject`` from the Garage.
@@ -504,7 +529,9 @@ extension Garage {
     @objc(deleteAllObjectsFromGarageOfClass:)
     public func deleteAllObjects(_ objectClass: AnyClass) {
         let className = NSStringFromClass(objectClass)
-        let coreDataObjects = fetchObjects(for: className, identifier: nil)
-        deleteAll(coreDataObjects)
+        context.performAndWait {
+            let coreDataObjects = fetchObjects(for: className, identifier: nil)
+            deleteAll(coreDataObjects)
+        }
     }
 }

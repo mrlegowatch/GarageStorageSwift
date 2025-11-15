@@ -6,16 +6,16 @@
 //  Copyright © 2019 Wellframe. All rights reserved.
 //
 
-import XCTest
-
+import Testing
 import Foundation
 
 // We are testing Core Data, which creates files in the Documents directory.
 // Fresh simulator builds may not have this directory?
-class BootstrapTests: XCTestCase {
+@Suite("Bootstrap Tests")
+struct BootstrapTests {
  
     // Ensure that the Documents directory exists (first time in Simulator)
-    override class func setUp() {
+    init() {
         TestSetup.classSetUp()
         let fileManager = FileManager.default
         let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).last!
@@ -24,9 +24,10 @@ class BootstrapTests: XCTestCase {
         }
     }
     
-    func testABootstrap() {
+    @Test("Documents directory exists")
+    func bootstrap() async throws {
         let fileManager = FileManager.default
         let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).last!
-        XCTAssertTrue(fileManager.fileExists(atPath: documentsDirectory.path))
+        #expect(fileManager.fileExists(atPath: documentsDirectory.path))
     }
 }
