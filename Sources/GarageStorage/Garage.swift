@@ -9,11 +9,11 @@
 import Foundation
 import CoreData
 
-/// The main interface for parking and retrieving objects. Anything stored at the top level directly must conform to `Codable`, and also conform to either `Hashable`, or GarageStorage’s ``Mappable`` protocol.
+/// The main interface for parking and retrieving objects. Anything stored at the top level directly must conform to `Codable`, and also conform to either `Hashable`, `Identifiable`, or GarageStorage’s ``Mappable`` protocol.
 ///
 /// The `Garage` is the main object that coordinates activity in GarageStorage. It's called a *garage* because you can park pretty much anything in it, like, you know, a garage. The `Garage` handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the `Garage`, and *retrieve* them later.
 ///
-/// Any object going into or coming out of the `Garage` must conform to the `Codable` protocol. Some objects may need to also conform to either the `Hashable` protocol, or the ``Mappable`` protocol (which is `Codable` and `Identifiable where ID == String`) for uniquely identified top-level objects.
+/// Any object going into or coming out of the `Garage` must conform to the `Codable` protocol. Some objects may need to also conform to either the `Hashable` protocol, the `Identifiable` protocol (where `ID` is `LosslessStringConvertible`), or the ``Mappable`` convenience protocol (which is `Codable` and `Identifiable where ID == String`) for uniquely identified top-level objects.
 ///
 /// For Objective-C compatibility, the ``MappableObject`` protocol may be used instead.
 @objc(GSGarage)
@@ -23,6 +23,10 @@ public class Garage: NSObject {
     
     private let persistentContainer: NSPersistentContainer
 
+    internal var context: NSManagedObjectContext {
+        persistentContainer.viewContext
+    }
+    
     /// An optional delegate for serializing/deserializing stored data. Specify this to add encryption to the stored data.
     @objc
     public weak var dataEncryptionDelegate: DataEncryptionDelegate?
@@ -51,7 +55,7 @@ public class Garage: NSObject {
     /// - returns: A `NSPersistentStoreDescription` of type `NSSQLiteStoreType`, with a URL in the application Documents directory, of the specified store name.
     public static func makePersistentStoreDescription(_ storeName: String) -> NSPersistentStoreDescription {
         let applicationDocumentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last!
-        let storeURL = applicationDocumentsDirectory.appendingPathComponent(storeName)
+        let storeURL = applicationDocumentsDirectory.appending(path: storeName)
         let description = NSPersistentStoreDescription(url: storeURL)
         description.type = NSSQLiteStoreType
         return description
@@ -66,7 +70,7 @@ public class Garage: NSObject {
         self.init(with: [description])
         
         loadPersistentStores { (description, error) in
-            if let error = error {
+            if let error {
                 print("An error occurred loading persistent store \(description), error: \(error)")
             }
         }
@@ -101,12 +105,9 @@ public class Garage: NSObject {
     
     // MARK: - Saving
     
-    /// Saves all changes to the Garage's persistent store. This will not affect in-memory objects. It is not necessary to call this while autosave is enabled.
-    ///
-    /// This only needs to be called if `isAutosaveEnabled` is set to `false`. No error is returned, but diagnostic text will be output to the console if an error occurs.
-    @objc(saveGarage)
-    public func save() {
-        let context = persistentContainer.viewContext
+    /// Saves all changes to the Garage's persistent store.
+    /// Must be called from within context.perform or context.performAndWait.
+    private func saveContext() {
         guard context.hasChanges else { return }
         do {
             try context.save()
@@ -114,25 +115,65 @@ public class Garage: NSObject {
             print("Error saving managed object context: \(error), \(error.userInfo)")
         }
     }
-    
-    internal func autosave() {
-        if isAutosaveEnabled {
-            save()
+        
+    /// Saves all changes to the Garage's persistent store. This will not affect in-memory objects. It is not necessary to call this while autosave is enabled.
+    ///
+    /// This only needs to be called if `isAutosaveEnabled` is set to `false`. No error is returned, but diagnostic text will be output to the console if an error occurs.
+    public func save() {
+        context.perform {
+            self.saveContext()
         }
     }
+    
+    /// Checks if autosave is enabled, and if so, performs a save.
+    internal func autosave() {
+        guard isAutosaveEnabled else { return }
+        context.perform {
+            self.saveContext()
+        }
+    }
+    
+    /// Temporarily disables autosave while executing the provided closure, then restores the previous autosave state.
+    ///
+    /// This is useful for performing batch operations where you want to defer saving until all changes are complete. The autosave state is automatically restored even if the closure throws an error.
+    ///
+    /// - parameter closure: A closure to execute with autosave disabled. If the closure throws, the error is propagated after restoring the autosave state.
+    /// - throws: Rethrows any error thrown by the closure.
+    ///
+    /// Example usage:
+    /// ```swift
+    /// try garage.withAutosaveDisabled {
+    ///     try garage.park(person1)
+    ///     try garage.park(person2)
+    ///     try garage.park(person3)
+    /// }
+    /// garage.save() // Manually save after batch operations
+    /// ```
+    public func withAutosaveDisabled<Result>(_ closure: () throws -> Result) rethrows -> Result {
+        let previousState = isAutosaveEnabled
+        isAutosaveEnabled = false
+        defer {
+            isAutosaveEnabled = previousState
+        }
+        return try closure()
+    }
 
+    /// Encrypts the data using the dataEncryptionDelegate, if specified, otherwise converts the data to a plain string.
     internal func encrypt(_ data: Data) throws -> String {
         return try dataEncryptionDelegate?.encrypt(data) ?? String(data: data, encoding: .utf8)!
     }
     
+    /// Decrypts the string using the dataEncryptionDelegate, if specified, otherwise converts the string to plain data.
     internal func decrypt(_ string: String) throws -> Data {
         return try dataEncryptionDelegate?.decrypt(string) ?? string.data(using: .utf8)!
     }
 
     // MARK: - Parking
     
+    /// Returns a new Core Data object with the type and identifier filled in.
+    /// Must be called from within context.performAndWait.
     internal func makeCoreDataObject(_ type: String, identifier: String) -> CoreDataObject {
-         let newObject = NSEntityDescription.insertNewObject(forEntityName: CoreDataObject.entityName, into: persistentContainer.viewContext) as! CoreDataObject
+         let newObject = NSEntityDescription.insertNewObject(forEntityName: CoreDataObject.entityName, into: context) as! CoreDataObject
          
          newObject.gs_type = type
          newObject.gs_identifier = identifier
@@ -141,26 +182,34 @@ public class Garage: NSObject {
          return newObject
      }
 
+    // MARK: - Retrieving
+
+    /// Fetches the Core Data object matching the type and identifier, and creates a new object if one has not been created yet.
+    /// Must be called from within context.performAndWait.
     internal func retrieveCoreDataObject(for type: String, identifier: String) -> CoreDataObject {
         return fetchObject(for: type, identifier: identifier) ?? makeCoreDataObject(type, identifier: identifier)
     }
     
-    // MARK: - Retrieving
-    
+    /// Fetches an array of Core Data objects matching the type and identifier (if specifed). Returns an empty array if none are found.
+    /// Must be called from within context.performAndWait.
     internal func fetchObjects(for type: String, identifier: String?) -> [CoreDataObject] {
         let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
         fetchRequest.predicate = CoreDataObject.predicate(for: type, identifier: identifier)
-        let fetchedObjects = try? persistentContainer.viewContext.fetch(fetchRequest)
+        let fetchedObjects = try? context.fetch(fetchRequest)
         
         return fetchedObjects ?? []
     }
     
+    /// Fetches the first Core Data object matching the type and identifier, and returns nil if not found.
+    /// Must be called from within context.performAndWait.
     internal func fetchObject(for type: String, identifier: String?) -> CoreDataObject? {
         let fetchedObjects = fetchObjects(for: type, identifier: identifier)
         
         return fetchedObjects.count > 0 ? fetchedObjects[0] : nil
     }
     
+    /// Fetches the first Core Data object matching the type and identifier. Throws an error if not found.
+    /// Must be called from within context.performAndWait.
     internal func fetchCoreDataObject(for type: String, identifier: String) throws -> CoreDataObject {
         guard let coreDataObject = fetchObject(for: type, identifier: identifier) else {
             throw Garage.makeError("failed to retrieve object of class: \(type) identifier: \(identifier)")
@@ -168,37 +217,52 @@ public class Garage: NSObject {
         return coreDataObject
     }
 
+	/// Fetches objects matching the specified syncStatus, optionally with the specified type string.
+	/// Must be called from within context.performAndWait.
     internal func fetchObjects(with syncStatus: SyncStatus, type: String?) throws -> [CoreDataObject] {
         let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
         fetchRequest.predicate = CoreDataObject.predicate(for: syncStatus, type: type)
         
-        return try persistentContainer.viewContext.fetch(fetchRequest)
+        return try context.fetch(fetchRequest)
     }
     
     // MARK: - Deleting
-     
-    internal func delete(_ object: CoreDataObject) throws {
-        persistentContainer.viewContext.delete(object)
-        
-        autosave()
+    
+    /// Deletes the Core Data object. Used by Garage+Codable.
+    /// Must be called from within context.performAndWait.
+    internal func deleteCoreDataObject(for typeName: String, identifier: String) throws {
+        let coreDataObject = try fetchCoreDataObject(for: typeName, identifier: identifier)
+        context.delete(coreDataObject)
     }
 
+    /// Deletes the array of Core Data objects. Used by Garage+Codable and by deleteAllObjects
+    /// Must be called from within context.performAndWait.
     internal func deleteAll(_ objects: [CoreDataObject]) {
         guard objects.count > 0 else { return }
         
         for object in objects {
-            persistentContainer.viewContext.delete(object)
+            context.delete(object)
         }
-        
-        autosave()
     }
     
-    /// Deletes all objects from the Garage.
-    @objc(deleteAllObjectsFromGarage)
-    public func deleteAllObjects() {
-        let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
-        guard let objects = try? persistentContainer.viewContext.fetch(fetchRequest) else { return }
-        deleteAll(objects)
+    /// Deletes all objects from the Garage and performs an autosave.
+    /// This operation is performed on a background thread.
+    ///
+    /// - parameter completion: An optional closure that is called after the deletion completes. This closure is called on the main thread.
+    public func deleteAllObjects(completion: (() -> Void)? = nil) {
+        context.perform {
+            let fetchRequest: NSFetchRequest<CoreDataObject> = CoreDataObject.fetchRequest()
+            guard let objects = try? self.context.fetch(fetchRequest) else {
+                DispatchQueue.main.async {
+                    completion?()
+                }
+                return
+            }
+            self.deleteAll(objects)
+            self.autosave()
+            DispatchQueue.main.async {
+                completion?()
+            }
+        }
     }
-
 }

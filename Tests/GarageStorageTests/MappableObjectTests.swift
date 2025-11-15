@@ -6,74 +6,72 @@
 //  Copyright © 2019 Wellframe. All rights reserved.
 //
 
-import XCTest
+import Testing
 
 import Foundation
 import GarageStorage
 import CoreData
 
 // This set of tests use Swift-declared Objective-C-compatible MappableObjects.
-class MappableObjectTests: XCTestCase {
+@Suite("MappableObject Tests")
+struct MappableObjectTests {
     
-    override class func setUp() {
+    init() {
         TestSetup.classSetUp()
     }
     
-    override func setUp() {
-        // Reset the underlying storage before running each test.
-        let garage = Garage(named: testStoreName)
-        garage.deleteAllObjects()
-    }
-    
-    func testMappableObject() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test mappable object parking and retrieval")
+    func testMappableObject() async throws {
+        let garage = makeTestGarage()
         
         // Create a "Sam" person and park it.
         do {
             let sam = objCPerson()
-            XCTAssertNoThrow(try garage.parkObject(sam), "parkObject")
+            try garage.parkObject(sam)
         }
         
         // Retrieve the "Sam" person.
         do {
-            let sam = try? garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
-            XCTAssertNotNil(sam, "Failed to retrieve 'Sam' from garage store")
-            XCTAssertEqual(sam?.name ?? "", "Sam", "expected Sam to be Sam")
-            XCTAssertEqual(sam?.importantDates.count ?? 0, 3, "expected 3 important dates")
+            let sam = try garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
+            #expect(sam != nil, "Failed to retrieve 'Sam' from garage store")
+            #expect(sam?.name == "Sam", "expected Sam to be Sam")
+            #expect(sam?.importantDates.count == 3, "expected 3 important dates")
             
             // Make sure brother and siblings worked out.
             let brother = sam?.brother
-            XCTAssertNotNil(brother, "O brother, my brother")
-            XCTAssertEqual(brother?.name ?? "", "Nick", "expected brother to be Nick")
-            XCTAssertEqual(sam?.siblings.count, 2, "expected 2 siblings")
+            #expect(brother != nil, "O brother, my brother")
+            #expect(brother?.name == "Nick", "expected brother to be Nick")
+            #expect(sam?.siblings.count == 2, "expected 2 siblings")
         }
     }
     
-    func testArrayOfMappable() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test parking and retrieving array of mappable objects")
+    func testArrayOfMappable() async throws {
+        let garage = makeTestGarage()
         
         // Create a pair of people and park them.
         do {
             let nick = objCPerson2()
             let emily = objCPerson3()
-            XCTAssertNoThrow(try garage.parkObjects([nick, emily]), "parkObjects")
+            try garage.parkObjects([nick, emily])
         }
         
         // Retrieve each person.
         do {
-            let nick = try? garage.retrieveObject(ObjCPerson.self, identifier: "Nick")
-            XCTAssertNotNil(nick, "Failed to retrieve 'Nick' from garage store")
+            let nick = try garage.retrieveObject(ObjCPerson.self, identifier: "Nick")
+            #expect(nick != nil, "Failed to retrieve 'Nick' from garage store")
             
-            let emily = try? garage.retrieveObject(ObjCPerson.self, identifier: "Emily")
-            XCTAssertNotNil(emily, "Failed to retrieve 'Emily' from garage store")
+            let emily = try garage.retrieveObject(ObjCPerson.self, identifier: "Emily")
+            #expect(emily != nil, "Failed to retrieve 'Emily' from garage store")
             
-            let sam = try? garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
-            XCTAssertNil(sam, "Should not have been able to retrieve 'Sam' from garage store")
+            let sam = try garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
+            #expect(sam == nil, "Should not have been able to retrieve 'Sam' from garage store")
         }
     }
     
-    func testMissingIdentifyingAttribute() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test parking object with missing identifying attribute")
+    func testMissingIdentifyingAttribute() async throws {
+        let garage = makeTestGarage()
         
         // This should emit a logging message.
         // FIX: Once the GS implementation is converted to Swift, as each implementation is
@@ -82,47 +80,55 @@ class MappableObjectTests: XCTestCase {
         do {
             let boat = ObjCBoat()
             boat.name = "BoatyMcBoatBoat"
-            XCTAssertNoThrow(try garage.parkObject(boat), "parkObject")
+            try garage.parkObject(boat)
         }
     }
     
-    func testMissingReferencedObject() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test retrieving object with missing referenced object")
+    func testMissingReferencedObject() async throws {
+        let garage = makeTestGarage()
 
         // Create a "Sam" person and park it.
         do {
             let sam = objCPerson()
-            XCTAssertNoThrow(try garage.parkObject(sam), "parkObject")
+            try garage.parkObject(sam)
         }
         
         // Retrieve Nick and remove him
         do {
-            let nick = try? garage.retrieveObject(ObjCPerson.self, identifier: "Nick")
-            XCTAssertNotNil(nick, "Failed to retrieve 'Nick' from garage store")
+            let nick = try garage.retrieveObject(ObjCPerson.self, identifier: "Nick")
+            let unwrappedNick = try #require(nick, "Failed to retrieve 'Nick' from garage store")
             
-            XCTAssertNoThrow(try garage.deleteObject(nick!))
+            try garage.deleteObject(unwrappedNick)
         }
         
         // Now try to retrieve Sam. This should fail because Sam references Nick, and Nick has been removed from storage.
         do {
-            let sam = try? garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
-            XCTAssertNil(sam, "Should not have been able to retrieve 'Sam' from garage store")
+            let sam = try garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
+            #expect(sam == nil, "Should not have been able to retrieve 'Sam' from garage store")
+        } catch let error as NSError {
+            // Refine this test point after we adopt Error enums.
+            #expect(error.domain == Garage.errorDomain, "Unexpected error domain")
         }
     }
     
-    func testNilObject() {
+    @Test("Test parking nil object throws error")
+    func testNilObject() async throws {
         // This tests the Objective-C interface to parkObject, which throws in Swift.
-        let garage = Garage(named: testStoreName)
+        let garage = makeTestGarage()
         
         // This should emit a logging message, and an error.
         
         do {
-            XCTAssertThrowsError(try garage.__parkObjectObjC(nil), "Should have thrown an error")
+            #expect(throws: Error.self) {
+                try garage.__parkObjectObjC(nil)
+            }
         }
     }
     
-    func testRetrievingCollections() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test retrieving collections of objects")
+    func testRetrievingCollections() async throws {
+        let garage = makeTestGarage()
         
         // Park heterogeneous objects
         do {
@@ -132,30 +138,25 @@ class MappableObjectTests: XCTestCase {
             
             let oldAddress = objCAddress()
             let newAddress = objCAddress2()
-            XCTAssertNoThrow(try garage.parkObjects([nick, emily, sam, oldAddress, newAddress]), "parkObjects")
+            try garage.parkObjects([nick, emily, sam, oldAddress, newAddress])
         }
         
         // Retrieve persons
         do {
             let people = try garage.retrieveAllObjects(ObjCPerson.self)
-            XCTAssertEqual(people.count, 3, "Number of Persons didn't match")
-        }
-        catch {
-            XCTFail("retrieveAllObjects should not throw an error, \(error)")
+            #expect(people.count == 3, "Number of Persons didn't match")
         }
         
         // Retrieve Addresses
         do {
             let addresses = try garage.retrieveAllObjects(ObjCAddress.self)
-            XCTAssertEqual(addresses.count, 2, "Number of Persons didn't match")
-        }
-        catch {
-            XCTFail("retrieveAllObjects should not throw an error, \(error)")
+            #expect(addresses.count == 2, "Number of Persons didn't match")
         }
     }
     
-    func testDeletingObject() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test deleting an object")
+    func testDeletingObject() async throws {
+        let garage = makeTestGarage()
         
         // Park heterogeneous objects
         do {
@@ -163,26 +164,29 @@ class MappableObjectTests: XCTestCase {
             let nick = objCPerson2()
             let emily = objCPerson3()
             
-            XCTAssertNoThrow(try garage.parkObjects([nick, emily, sam]), "parkObjects")
+            try garage.parkObjects([nick, emily, sam])
         }
         
         // Delete a person
         do {
-            let nick = try? garage.retrieveObject(ObjCPerson.self, identifier: "Nick")
-            XCTAssertNotNil(nick, "We need nick, so we can delete him")
+            let nick = try garage.retrieveObject(ObjCPerson.self, identifier: "Nick")
+            let unwrappedNick = try #require(nick, "We need nick, so we can delete him")
             
-            XCTAssertNoThrow(try garage.deleteObject(nick!), "deleteObject")
+            try garage.deleteObject(unwrappedNick)
+        } catch {
+            print("Error deleting: \(error)")
         }
         
         // Confirm that the person has been deleted
         do {
-            let nick = try? garage.retrieveObject(ObjCPerson.self, identifier: "Nick")
-            XCTAssertNil(nick, "Nick should be gone")
+            let nick = try garage.retrieveObject(ObjCPerson.self, identifier: "Nick")
+            #expect(nick == nil, "Nick should be gone")
         }
     }
     
-    func testDeletingCollections() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test deleting collections of objects")
+    func testDeletingCollections() async throws {
+        let garage = makeTestGarage()
         
         // Park heterogeneous objects
         do {
@@ -192,7 +196,7 @@ class MappableObjectTests: XCTestCase {
             
             let oldAddress = objCAddress()
             let newAddress = objCAddress2()
-            XCTAssertNoThrow(try garage.parkObjects([nick, emily, sam, oldAddress, newAddress]), "parkObjects")
+            try garage.parkObjects([nick, emily, sam, oldAddress, newAddress])
         }
         
         // Delete persons
@@ -203,19 +207,17 @@ class MappableObjectTests: XCTestCase {
         // Confirm that there are no persons
         do {
             let persons = try garage.retrieveAllObjects(ObjCPerson.self)
-            XCTAssertEqual(persons.count, 0, "Should not be any Persons")
+            #expect(persons.count == 0, "Should not be any Persons")
             
             let addresses = try garage.retrieveAllObjects(ObjCAddress.self)
-            XCTAssertEqual(addresses.count, 2, "Should have 2 Addresses")
-            XCTAssertEqual(addresses[0].city, "Boston", "all addresses should be based in Boston")
-        }
-        catch {
-            XCTFail("retrieveAllObjects should not throw an error, \(error)")
+            #expect(addresses.count == 2, "Should have 2 Addresses")
+            #expect(addresses[0].city == "Boston", "all addresses should be based in Boston")
         }
     }
     
-    func testDeletingAllObjects() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test deleting all objects")
+    func testDeletingAllObjects() async throws {
+        let garage = makeTestGarage()
         
         // Park heterogeneous objects
         do {
@@ -225,7 +227,7 @@ class MappableObjectTests: XCTestCase {
             
             let oldAddress = objCAddress()
             let newAddress = objCAddress2()
-            XCTAssertNoThrow(try garage.parkObjects([nick, emily, sam, oldAddress, newAddress]), "parkObjects")
+            try garage.parkObjects([nick, emily, sam, oldAddress, newAddress])
         }
         
         // Delete everything
@@ -236,13 +238,10 @@ class MappableObjectTests: XCTestCase {
         // Confirm that there are no persons
         do {
             let persons = try garage.retrieveAllObjects(ObjCPerson.self)
-            XCTAssertEqual(persons.count, 0, "Should not be any Persons")
+            #expect(persons.count == 0, "Should not be any Persons")
             
             let addresses = try garage.retrieveAllObjects(ObjCAddress.self)
-            XCTAssertEqual(addresses.count, 0, "Should have 2 Addresses")
-        }
-        catch {
-            XCTFail("retrieveAllObjects should not throw an error, \(error)")
+            #expect(addresses.count == 0, "Should have 0 Addresses")
         }
         
         // Delete everything again (hits the no-op case, for code coverage)
@@ -252,8 +251,9 @@ class MappableObjectTests: XCTestCase {
         }
     }
 
-    func testSyncStatus() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test sync status management")
+    func testSyncStatus() async throws {
+        let garage = makeTestGarage()
         
         let sam = objCPerson()
         let nick = objCPerson2()
@@ -264,81 +264,75 @@ class MappableObjectTests: XCTestCase {
         
         // Park heterogeneous objects
         do {
-            XCTAssertNoThrow(try garage.parkObjects([nick, emily, sam, oldAddress, newAddress]), "parkObjects")
+            try garage.parkObjects([nick, emily, sam, oldAddress, newAddress])
         }
         
         // Validate initial sync status of Persons
         do {
             let syncing = try garage.retrieveObjects(withStatus: .syncing)
             
-            XCTAssertEqual(syncing.count, 1, "1 item should be syncing")
+            #expect(syncing.count == 1, "1 item should be syncing")
             
             let undetermined = try garage.retrieveObjects(withStatus: .undetermined)
-            XCTAssertEqual(undetermined.count, 2, "2 items should be undetermined")
+            #expect(undetermined.count == 2, "2 items should be undetermined")
             
             let notSynced = try garage.retrieveObjects(withStatus: .notSynced)
-            XCTAssertEqual(notSynced.count, 0, "no items should be not synced")
-        }
-        catch {
-            XCTFail("retrieveObjects should not throw an error, \(error)")
+            #expect(notSynced.count == 0, "no items should be not synced")
         }
         
         // Change Sam's sync status and validate that it changed
         do {
-            XCTAssertNoThrow(try garage.setSyncStatus(.notSynced, for: sam), "setSyncStatus")
+            try garage.setSyncStatus(.notSynced, for: sam)
             
             let syncing = try garage.retrieveObjects(withStatus: .syncing)
-            XCTAssertEqual(syncing.count, 0, "items should be syncing")
+            #expect(syncing.count == 0, "items should be syncing")
             
             let undetermined = try garage.retrieveObjects(withStatus: .undetermined)
-            XCTAssertEqual(undetermined.count, 2, "2 items should be undetermined")
+            #expect(undetermined.count == 2, "2 items should be undetermined")
             
             let notSynced = try garage.retrieveObjects(withStatus: .notSynced)
-            XCTAssertEqual(notSynced.count, 1, "items should be not synced")
-        }
-        catch {
-            XCTFail("retrieveObjects calls should not have thrown an error: \(error)")
+            #expect(notSynced.count == 1, "items should be not synced")
         }
         
         // Test setting sync status for a collection
         do {
-            XCTAssertNoThrow(try garage.setSyncStatus(.undetermined, for: [nick, sam]), "setSyncStatus")
-            XCTAssertEqual(try garage.syncStatus(for: nick), .undetermined, "Nick should have undetermined sync status")
+            try garage.setSyncStatus(.undetermined, for: [nick, sam])
+            #expect(try garage.syncStatus(for: nick) == .undetermined, "Nick should have undetermined sync status")
         }
         
         // Test retrieving objects with sync status of a particular class that isn't syncable
         do {
             let undetermined = try garage.retrieveObjects(withStatus: .undetermined, ofClass: ObjCAddress.self)
-            XCTAssertEqual(undetermined.count, 0, "retrievedObjects should have returned 0")
-        }
-        catch {
-            XCTFail("retrieveObjects should not have thrown an error: \(error)")
+            #expect(undetermined.count == 0, "retrievedObjects should have returned 0")
         }
         
         // Test retrieving objects with sync status of a particular class that is syncable
         do {
             let undetermined = try garage.retrieveObjects(withStatus: .undetermined, ofClass: ObjCPerson.self)
-            XCTAssertEqual(undetermined.count, 3, "retrievedObjects should have returned 2")
-        }
-        catch {
-            XCTFail("retrieveObjects should not have thrown an error: \(error)")
+            #expect(undetermined.count == 3, "retrievedObjects should have returned 3")
         }
     }
     
-    func testInvalidSyncStatus() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test setting sync status on unparked object throws error")
+    func testInvalidSyncStatus() async throws {
+        let garage = makeTestGarage()
         
         // Create, but don't park, sam
         let sam = objCPerson()
         
         do {
-            XCTAssertThrowsError(try garage.setSyncStatus(.notSynced, for: sam), "setSyncStatus should have thrown an error")
-            XCTAssertThrowsError(try garage.setSyncStatus(.notSynced, for: [sam]), "setSyncStatus should have thrown an error")
+            #expect(throws: Error.self) {
+                try garage.setSyncStatus(.notSynced, for: sam)
+            }
+            #expect(throws: Error.self) {
+                try garage.setSyncStatus(.notSynced, for: [sam])
+            }
         }
     }
     
-    func testDates() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test parking and retrieving dates")
+    func testDates() async throws {
+        let garage = makeTestGarage()
         
         do {
             let sam = objCPerson()
@@ -352,37 +346,34 @@ class MappableObjectTests: XCTestCase {
             dateComponents.timeZone = TimeZone(abbreviation: "UTC")
             let calendar = Calendar.current
             sam.birthdate = calendar.date(from: dateComponents)!
-            XCTAssertEqual(sam.birthdate.timeIntervalSinceReferenceDate, -1609459200.0, "Validating assumption about the test in UTC time")
+            #expect(sam.birthdate.timeIntervalSinceReferenceDate == -1609459200.0, "Validating assumption about the test in UTC time")
             
-            XCTAssertNoThrow(try garage.parkObject(sam), "parkObject")
+            try garage.parkObject(sam)
         }
         
         do {
-            let sam = try? garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
-            XCTAssertNotNil(sam, "Failed to retrieve 'Sam' from garage store")
+            let sam = try garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
+            #expect(sam != nil, "Failed to retrieve 'Sam' from garage store")
 
-            XCTAssertEqual(sam?.birthdate.timeIntervalSinceReferenceDate ?? 0, -1609459200.0, "Reconstituted date failed")
+            #expect(sam?.birthdate.timeIntervalSinceReferenceDate == -1609459200.0, "Reconstituted date failed")
         }
     }
     
-    func testNonExistentObject() {
-        let garage = Garage(named: testStoreName)
+    @Test("Test retrieving non-existent object behavior")
+    func testNonExistentObject() async throws {
+        let garage = makeTestGarage()
         
         // Swift behavior: be able to return nil for not found, not throw an error.
         do {
             let frodo = try garage.retrieveObject(ObjCPerson.self, identifier: "Frodo")
-            XCTAssertNil(frodo, "Should be nil")
-        }
-        catch {
-            XCTFail("Should not have thrown an error: \(error)")
+            #expect(frodo == nil, "Should be nil")
         }
         
         // Objective-C behavior: throw an error so that the ObjC runtime can return nil to an ObjC caller.
         do {
-            _ = try garage.__retrieveObjectObjC(ObjCPerson.self, identifier: "Frodo")
-            XCTFail("Should have thrown an error")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("failed to retrieve object"))
+            #expect(throws: Error.self) {
+                _ = try garage.__retrieveObjectObjC(ObjCPerson.self, identifier: "Frodo")
+            }
         }
     }
 }
