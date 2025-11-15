@@ -39,7 +39,7 @@ public class Garage: NSObject {
     
     /// The date decoding strategy used by JSONDecoder when decoding objects.
     ///
-    /// By default, this is set to a custom strategy that uses an internal `decodeTransformableDate` function that uses `Date.isoFormatter `for Codable objects or a wrapper conversion check for backward compatibility with Objective-C `MappableObject`.
+    /// By default, this is set to a custom strategy that uses `Date.isoFormatter`f or Codable objects and a wrapper conversion check for backward compatibility with Objective-C `MappableObject`.
     /// You can modify this to use a different date decoding strategy by wrapping a `retrieve()` call `withDateDecodingStrategy() { }`.
     public private(set) var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .custom(decodeTransformableDate)
     
