@@ -158,7 +158,7 @@ struct SwiftCodableTests {
     }
 
     @Test("Deleting all objects from garage")
-    func deletingAllObjects() throws {
+    func deletingAllObjects() async throws {
         let garage = makeTestGarage()
 
         // Park heterogeneous objects
@@ -171,19 +171,27 @@ struct SwiftCodableTests {
         try garage.parkAll([nick, emily, sam])
         try garage.parkAll([oldAddress, newAddress])
         
-        // Delete everything
-        garage.deleteAllObjects()
-        
-        // Confirm that there are no persons
-        let persons = try garage.retrieveAll(SwiftPerson.self)
-        #expect(persons.count == 0, "Should not be any Persons")
-        
-        let addresses = try garage.retrieveAll(SwiftAddress.self)
-        #expect(addresses.count == 0, "Should not be any Addresses")
-        
-        // Delete everything again (hits the no-op case, for code coverage)
-        garage.deleteAll(SwiftPerson.self)
-        garage.deleteAllObjects()
+        await withCheckedContinuation { continuation in
+            // Delete everything
+            garage.deleteAllObjects {
+                // Confirm that there are no persons
+                do {
+                    let persons = try garage.retrieveAll(SwiftPerson.self)
+                    #expect(persons.count == 0, "Should not be any Persons")
+                    
+                    let addresses = try garage.retrieveAll(SwiftAddress.self)
+                    #expect(addresses.count == 0, "Should not be any Addresses")
+                } catch {
+                    Issue.record("Unexpected error: \(error)")
+                }
+                
+                // Delete everything again (hits the no-op case, for code coverage)
+                garage.deleteAll(SwiftPerson.self)
+                garage.deleteAllObjects()
+                
+                continuation.resume()
+            }
+        }
     }
 
     @Test("Managing sync status of objects")
@@ -403,7 +411,7 @@ struct SwiftCodableTests {
     @Test("Convenience initializer creates garage with named store")
     func convenienceInitializer() throws {
         // Use the convenience initializer that creates a garage with a named store
-        let garage = makeTestGarage()
+        let garage = Garage(named: "GarageStorageTests/ConvenienceInitializer")
         
         // Verify the garage is functional by parking and retrieving an object
         let sam = swiftPerson()
@@ -453,5 +461,109 @@ struct SwiftCodableTests {
         // Confirm both addresses are now deleted
         let allAddresses = try garage.retrieveAll(SwiftAddress.self)
         #expect(allAddresses.count == 0, "All addresses should be deleted")
+    }
+    
+    @Test("Date encoding and decoding strategies can be temporarily changed")
+    func temporaryDateStrategies() throws {
+        let garage = makeTestGarage()
+        
+        // Create a person with a specific birthdate and time
+        let nick = swiftPerson2()
+        let timeZone = TestSetup.timeZone
+        var dateComponents = DateComponents()
+        dateComponents.day = 15
+        dateComponents.month = 6
+        dateComponents.year = 1985
+        dateComponents.hour = 12
+        dateComponents.minute = 30
+        dateComponents.timeZone = timeZone
+        
+        var calendar = Calendar.current
+        calendar.timeZone = timeZone
+        let nickBirthdate = calendar.date(from: dateComponents)!
+        nick.birthdate = nickBirthdate
+        
+        // Create a simple date formatter for testing that doesn't include time
+        let simpleDateFormatter = DateFormatter()
+        simpleDateFormatter.dateFormat = "yyyy-MM-dd"
+        simpleDateFormatter.timeZone = timeZone
+        
+        // Test both strategies together: Park with formatted strategy
+        try garage.withDateEncodingStrategy(.formatted(simpleDateFormatter)) {
+            try garage.park(nick)
+        }
+        
+        // Retrieve with a matching decoding strategy
+        let retrievedNick = try garage.withDateDecodingStrategy(.formatted(simpleDateFormatter)) {
+            try garage.retrieve(SwiftPerson.self, identifier: "Nick")
+        }
+        let unwrappedNick = try #require(retrievedNick)
+        
+        // initial Date includes time, unwrapped Date no longer includes time, so they should be different.
+        #expect(nick.birthdate != unwrappedNick.birthdate, "Dates should not match, unwrappedNick should have no time")
+        
+        // Note: Time components will be lost with the simple formatter
+        let nickDateOnly = calendar.date(from: calendar.dateComponents([.year, .month, .day], from: nickBirthdate))!
+        let retrievedDateOnly = calendar.date(from: calendar.dateComponents([.year, .month, .day], from: unwrappedNick.birthdate))!
+        #expect(nickDateOnly == retrievedDateOnly, "Date (without time) should match")
+        
+        // Negative test: if encoded using non-default format, but decoded without the non-default format, ensure that decoding might fail.
+        do {
+            _ = try garage.retrieve(SwiftPerson.self, identifier: "Nick")
+            // If we reach here without throwing, the test should fail
+            Issue.record("Expected retrieve to throw an error")
+        } catch let error {
+            #expect(error.localizedDescription == "The data couldn’t be read because it isn’t in the correct format.")
+        }
+        
+        // Ensure that deletion doesn't rely on either encoding or decoding.
+        try garage.delete(nick)
+    }
+    
+    @Test("Back-to-back deleteAllObjects calls for code coverage")
+    func backToBackDeleteAllObjects() async throws {
+        let garage = makeTestGarage()
+        
+        // Park three SwiftPerson objects
+        let sam = swiftPerson()
+        let nick = swiftPerson2()
+        let emily = swiftPerson3()
+        try garage.parkAll([sam, nick, emily])
+        
+        // Verify all three are parked
+        let allPeople = try garage.retrieveAll(SwiftPerson.self)
+        #expect(allPeople.count == 3, "Should have 3 people parked")
+        
+        // First deleteAllObjects call with completion handler
+        await withCheckedContinuation { continuation in
+            garage.deleteAllObjects {
+                continuation.resume()
+            }
+        }
+        
+        // Verify all objects are deleted
+        let peopleAfterFirstDelete = try garage.retrieveAll(SwiftPerson.self)
+        #expect(peopleAfterFirstDelete.count == 0, "Should have no people after first delete")
+        
+        // Second deleteAllObjects call (should hit the empty case for coverage)
+        await withCheckedContinuation { continuation in
+            garage.deleteAllObjects {
+                continuation.resume()
+            }
+        }
+        
+        // Verify still no objects
+        let peopleAfterSecondDelete = try garage.retrieveAll(SwiftPerson.self)
+        #expect(peopleAfterSecondDelete.count == 0, "Should still have no people after second delete")
+        
+        // Third deleteAllObjects call without completion handler for additional coverage
+        garage.deleteAllObjects()
+        
+        // Give it a moment to complete
+        try await Task.sleep(for: .milliseconds(100))
+        
+        // Final verification
+        let peopleAfterThirdDelete = try garage.retrieveAll(SwiftPerson.self)
+        #expect(peopleAfterThirdDelete.count == 0, "Should still have no people after third delete")
     }
 }
