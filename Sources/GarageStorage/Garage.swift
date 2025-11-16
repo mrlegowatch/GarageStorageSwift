@@ -33,9 +33,23 @@ public class Garage: NSObject {
 
     /// Autosave is set to true by default, for every operation that causes a change to the underlying Core Data Managed Object Context.
     ///
-    /// When set to true, the garage will be saved after any operation that causes a change to the underlying Core Data Managed Object Context, including `park()`, `setSyncStatus()`, and `delete()`. When set to false, `save()` must be called instead, in order to persist those changes. You might want to use `withAutosaveDisabled(:)` to set this to false, in order to perform batch changes to many objects before saving them all, optimizing performance.
+    /// When set to true, the garage will be saved after any operation that causes a change to the underlying Core Data Managed Object Context, such as `park()`. When set to false, `save()` must be called instead, in order to persist those changes.
+    ///
+    /// Use ``withAutosaveDisabled(_:)`` to set this to false, in order to perform batch changes to many objects before saving them all, optimizing performance.
     @objc(autosaveEnabled)
-    public var isAutosaveEnabled = true
+    public private(set) var isAutosaveEnabled = true
+    
+    /// The date decoding strategy used by JSONDecoder when decoding objects.
+    ///
+    /// By default, this is set to a custom strategy that uses `Date.isoFormatter`f or Codable objects and a wrapper conversion check for backward compatibility with Objective-C `MappableObject`.
+    /// You can modify this to apply a different date decoding strategy for a `retrieve()` call using ``withDateDecodingStrategy(_:_:)``.
+    public private(set) var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .custom(decodeTransformableDate)
+    
+    /// The date encoding strategy used by JSONEncoder when encoding objects.
+    ///
+    /// By default, this is set to use ISO 8601 formatted dates via `Date.isoFormatter`.
+    /// You can modify this to apply a different date encoding strategy for a `park()` call using ``withDateEncodingStrategy(_:_:)``.
+    public private(set) var dateEncodingStrategy: JSONEncoder.DateEncodingStrategy = .formatted(Date.isoFormatter)
     
     /// The date decoding strategy used by JSONDecoder when decoding objects.
     ///
@@ -148,6 +162,8 @@ public class Garage: NSObject {
     /// Temporarily disables autosave while executing the provided closure, then restores the previous autosave state.
     ///
     /// This is useful for performing batch operations where you want to defer saving until all changes are complete. The autosave state is automatically restored even if the closure throws an error.
+    ///
+    /// - note: You must call ``save()`` directly at some point after executing one or more closures in this manner.
     ///
     /// - parameter closure: A closure to execute with autosave disabled. If the closure throws, the error is propagated after restoring the autosave state.
     /// - throws: Rethrows any error thrown by the closure.
