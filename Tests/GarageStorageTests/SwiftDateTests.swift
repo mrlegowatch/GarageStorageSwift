@@ -89,9 +89,11 @@ struct SwiftDateTests {
         do {
             _ = try garage.retrieve(SwiftPerson.self, identifier: "Nick")
             // If we reach here without throwing, the test should fail
-            Issue.record("Expected retrieve to throw an error")
-        } catch let error {
-            #expect(error.localizedDescription == "The data couldn’t be read because it isn’t in the correct format.")
+            Issue.record("Expected retrieve to throw DecodingError.dataCorrupted")
+        } catch DecodingError.dataCorrupted {
+            // Expected
+        } catch {
+            Issue.record("Expected retrieve to throw DecodingError.dataCorrupted")
         }
         
         // Ensure that deletion doesn't rely on either encoding or decoding.

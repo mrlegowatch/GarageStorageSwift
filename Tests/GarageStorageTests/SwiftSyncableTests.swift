@@ -78,11 +78,11 @@ struct SwiftSyncableTests {
         let sam = swiftPerson()
         
         // Verify that setting sync status on an unparked object throws an error
-        #expect(throws: Error.self) {
+        #expect(throws: GarageError.self) {
             try garage.setSyncStatus(.notSynced, for: sam)
         }
         
-        #expect(throws: Error.self) {
+        #expect(throws: GarageError.self) {
             try garage.setSyncStatus(.notSynced, for: [sam])
         }
     }
