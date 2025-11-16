@@ -190,7 +190,7 @@ extension Garage {
     /// Must be called from within context.performAndWait.
     private func makeCodable<T: Decodable>(from coreDataObject: CoreDataObject) throws -> T {
         guard let data = coreDataObject.gs_data else {
-            throw Garage.makeError("failed to retrieve gs_data from store of type \(T.self)")
+            throw GarageError.storageDataIsNil("\(T.self)")
         }
         return try decodeData(data)
     }

@@ -165,7 +165,7 @@ extension Garage {
         let jsonData = try decrypt(string)
         let jsonObject = try JSONSerialization.jsonObject(with: jsonData, options: [])
         guard let jsonDict = jsonObject as? [String:Any] else {
-            throw Garage.makeError("json format was not a dictionary: \(self)")
+            throw GarageError.makeError("json format was not a dictionary: \(self)")
         }
         
         return try makeMappableObject(className, jsonDictionary: jsonDict)
@@ -174,7 +174,7 @@ extension Garage {
     private func makeMappableObject(from coreDataObject: CoreDataObject) throws -> MappableObject {
         let className = coreDataObject.gs_type!
         guard let data = coreDataObject.gs_data else {
-            throw Garage.makeError("failed to retrieve gs_data from store of type \(className)")
+            throw GarageError.makeError("failed to retrieve gs_data from store of type \(className)")
         }
         let mappedObject = try decodeData(data, className: className)
         
@@ -202,7 +202,7 @@ extension Garage {
         let identifier = dictionary[CoreDataObject.Attribute.identifier] as! String
         
         guard let referencedObject = fetchObject(for: type, identifier: identifier) else {
-            throw Garage.makeError("Failed to fetch referenced object for type: \(type) identifier: \(identifier)")
+            throw GarageError.makeError("Failed to fetch referenced object for type: \(type) identifier: \(identifier)")
         }
         return try makeMappableObject(from: referencedObject)
     }
@@ -269,7 +269,7 @@ extension Garage {
             // Note: if kvc.value(forKey:) is throwing an exception and the MappableObject is in Swift,
             // it could be because the identifying attribute lacks an '@objc' in front of it.
             guard let value = kvc.value(forKey: identifyingAttribute) else {
-                throw Garage.makeError("Could not find identifying attribute `\(identifyingAttribute)` for object: \(object)")
+                throw GarageError.makeError("Could not find identifying attribute `\(identifyingAttribute)` for object: \(object)")
             }
             identifier = value as! String
         } else {
@@ -287,7 +287,7 @@ extension Garage {
         let identifier = try coreDataIdentifier(for: object, attribute: mapping.identifyingAttribute)
         
         guard let coreDataObject = fetchObject(for: type, identifier: identifier) else {
-            throw Garage.makeError("Failed to retrieve core data object for \(object), has it been parked yet?")
+            throw GarageError.makeError("Failed to retrieve core data object for \(object), has it been parked yet?")
         }
         
         return coreDataObject
@@ -325,7 +325,7 @@ extension Garage {
     public func __parkObjectObjC(_ object: MappableObject?) throws {
         // This public function does not call context.performAndWait or autosave() because it calls another public function that does.
         guard let object = object else {
-            throw Garage.makeError("nil passed to parkObject")
+            throw GarageError.makeError("nil passed to parkObject")
         }
         
         try parkObject(object)
@@ -382,7 +382,7 @@ extension Garage {
             guard let object = try retrieveMappableObject(objectClass, identifier: identifier) else {
                 // This "throws" an error in order for the return value to be nil in Objective-C.
                 let className = NSStringFromClass(objectClass)
-                throw Garage.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
+                throw GarageError.makeError("failed to retrieve object of class: \(className) identifier: \(identifier)")
             }
             return object
         }

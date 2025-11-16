@@ -107,7 +107,6 @@ struct MappableObjectTests {
             let sam = try garage.retrieveObject(ObjCPerson.self, identifier: "Sam")
             #expect(sam == nil, "Should not have been able to retrieve 'Sam' from garage store")
         } catch let error as NSError {
-            // Refine this test point after we adopt Error enums.
             #expect(error.domain == Garage.errorDomain, "Unexpected error domain")
         }
     }

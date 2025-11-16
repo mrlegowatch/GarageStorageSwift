@@ -57,7 +57,7 @@ public extension KeyedEncodingContainer {
 /// These public decoding extensions are exposed to the Swift runtime, to ensure that references to any embedded `Identifiable` objects (where `ID` is `LosslessStringConvertible`) are correctly retrieved from the top level of the Garage.
 public extension KeyedDecodingContainer {
 
-    private func decodeReferenceIfPresent(forKey key: KeyedDecodingContainer<K>.Key) throws -> String? {
+    private func decodeReferenceIfPresent(forKey key: KeyedDecodingContainer<K>.Key) -> String? {
         let reference: String?
         
         // Swift Codable encodes the identifier directly
@@ -74,9 +74,9 @@ public extension KeyedDecodingContainer {
     }
 
     private func decodeReference(forKey key: KeyedDecodingContainer<K>.Key) throws -> String {
-        guard let reference = try decodeReferenceIfPresent(forKey: key) else {
-            let context = DecodingError.Context(codingPath: try superDecoder().codingPath, debugDescription: "Failed to decode Identifiable reference")
-            throw DecodingError.dataCorrupted(context)
+        guard let reference = decodeReferenceIfPresent(forKey: key) else {
+            let decoder = try superDecoder()
+            throw decoder.missingIdentifiableReference()
         }
         
         return reference
@@ -113,9 +113,7 @@ public extension KeyedDecodingContainer {
         
         let reference = try decodeReference(forKey: key)
         guard let object = try garage.retrieveDecodable(T.self, identifier: reference) else {
-            let description = "Missing reference: \(reference) of type: \(T.self)"
-            let context = DecodingError.Context(codingPath: decoder.codingPath, debugDescription: description)
-            throw DecodingError.dataCorrupted(context)
+            throw decoder.missingIdentifiableReference(typeName: "\(T.self)", identifier: reference)
         }
         return object
     }
@@ -133,12 +131,12 @@ public extension KeyedDecodingContainer {
             return try decodeIfPresentDefault(T.self, forKey: key)
         }
         
-        guard let reference = try decodeReferenceIfPresent(forKey: key) else {
+        guard let reference = decodeReferenceIfPresent(forKey: key) else {
             return nil
         }
         return try garage.retrieveDecodable(T.self, identifier: reference)
     }
-    
+        
     /// Decodes an array of references to nested `Identifiable` objects (where `ID` is `LosslessStringConvertible`).
     func decode<T: Decodable & Identifiable>(_ identifiable: [T].Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> [T] where T.ID: LosslessStringConvertible {
         // If this decoder does not have a garage, decode as Codable does.
@@ -152,7 +150,7 @@ public extension KeyedDecodingContainer {
         var objects: [T] = []
         for reference in references {
             guard let object = try garage.retrieveDecodable(T.self, identifier: reference) else {
-                throw Garage.makeError("Missing reference: \(reference) of type: \(T.self)")
+                throw decoder.missingIdentifiableReference(identifier: reference)
             }
             objects.append(object)
         }
