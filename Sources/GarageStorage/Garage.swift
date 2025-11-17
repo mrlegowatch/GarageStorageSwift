@@ -13,7 +13,7 @@ import CoreData
 ///
 /// The `Garage` is the main object that coordinates activity in GarageStorage. It's called a *garage* because you can park pretty much anything in it, like, you know, a garage. The `Garage` handles the backing Core Data stack, as well as the saving and retrieving of data. You *park* objects in the `Garage`, and *retrieve* them later.
 ///
-/// Any object going into or coming out of the `Garage` must conform to the `Codable` protocol. Some objects may need to also conform to either the `Hashable` protocol, the `Identifiable` protocol (where `ID` is `LosslessStringConvertible`), or the ``Mappable`` convenience protocol (which is `Codable` and `Identifiable where ID == String`) for uniquely identified top-level objects.
+/// Any object going into or coming out of the `Garage` must conform to the `Codable` protocol. Some objects may need to also conform to either the `Hashable` protocol, the `Identifiable` protocol, or the ``Mappable`` convenience protocol (which is `Codable & Identifiable`) for uniquely identified top-level objects.
 ///
 /// For Objective-C compatibility, the ``MappableObject`` protocol may be used instead.
 @objc(GSGarage)
