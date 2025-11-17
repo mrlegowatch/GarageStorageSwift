@@ -38,17 +38,32 @@ extension Decoder {
 
 extension Garage {
     
-    // MARK: - Identifiable ID extraction helpers (no reflection)
-    private func extractStringID<I: Identifiable>(_ x: I) -> String? where I.ID == String { x.id }
-    private func extractUUIDID<I: Identifiable>(_ x: I) -> String? where I.ID == UUID { x.id.uuidString }
-    private func extractConvertibleID<I: Identifiable>(_ x: I) -> String? where I.ID: LosslessStringConvertible { String(x.id) }
-    private func describeAnyID<I: Identifiable>(_ x: I) -> String? { String(describing: x.id) }
-
-    // Helper to rebind an `any Identifiable` existential to a generic function when possible
-    private func callGeneric<I: Identifiable>(_ value: any Identifiable, _ f: (I) -> String?) -> String? {
-        (value as? I).flatMap(f)
+    // MARK: - Identifiable ID extraction helpers
+    
+    /// Extracts an identifier string representation from an Identifiable ID or Hashable.
+    private func extractIdentifierString(from identifiable: any Identifiable) -> String {
+        let id = identifiable.id
+        
+        // Supported conversions for ID.
+        if let stringId = id as? String { return stringId }
+        if let uuidId = id as? UUID { return uuidId.uuidString }
+        if let convertibleId = id as? any LosslessStringConvertible { return String(convertibleId) }
+        
+        // Fallback to String(describing:)
+        return String(describing: id)
+    }
+ 
+    /// Converts an identifier to a string representation.
+    private func convertIdentifierToString<ID>(_ identifier: ID) -> String {
+        // Supported conversions for identifiers.
+        if let stringId = identifier as? String { return stringId }
+        if let uuidId = identifier as? UUID { return uuidId.uuidString }
+        
+        // Fallback to String(describing:)
+        return String(describing: identifier)
     }
     
+
     // MARK: Core Data
     
     /// Decodes string data to the specified object type, decrypting the data if a ``dataEncodingDelegate`` is specified.
@@ -88,21 +103,19 @@ extension Garage {
         }
     }
     
-    /// Resolves an identifier from either an Identifiable with ID = LosslessStringConvertible or UUID, or a Hashable.
+    /// Resolves an identifier from either an `Identifiable` or a `Hashable`.
     /// Throws if the type conforms to neither.
     private func resolveIdentifier<T>(for object: T) throws -> String {
-        // Prefer Identifiable without reflection by opening the existential through constrained helpers.
+        // Prefer Identifiable
         if let identifiable = object as? any Identifiable {
-            if let s = callGeneric(identifiable, extractStringID) { return s }
-            if let s = callGeneric(identifiable, extractUUIDID) { return s }
-            if let s = callGeneric(identifiable, extractConvertibleID) { return s }
-            if let s = callGeneric(identifiable, describeAnyID) { return s }
+            return extractIdentifierString(from: identifiable)
         }
-        // Fallback to Hashable using hashValue
+        // Fallback to Hashable
         if let hashable = object as? any Hashable {
             return "\(hashable.hashValue)"
         }
-        throw GarageError.makeError("Type \(T.self) must conform to either Identifiable or Hashable to be parked")
+        
+        throw GarageError.missingConformance("\(T.self)")
     }
     
     /// Adds an object conforming to `Identifiable` or  `Hashable` to the Garage.
@@ -115,6 +128,8 @@ extension Garage {
         autosave()
     }
     
+    /// Adds an array of objects conforming to `Encodable` to the Garage.
+    /// Must be called from within context.performAndWait.
     internal func parkAllEncodables<T: Encodable>(_ objects: [T]) throws {
         for object in objects {
             let identifier = try resolveIdentifier(for: object)
@@ -122,8 +137,11 @@ extension Garage {
         }
     }
     
-    /// Adds an array of objects to the Garage by preferring Identifiable identity over Hashable when both apply.
-    /// The public API is unconstrained to avoid overload ambiguity; identity selection is resolved at runtime per element.
+    /// Adds an array of objects to the Garage conforming to `Encodable` and either `Identifiable` or `Hashable` to the Garage.
+    ///
+    ///  -  parameter objects: The array of objects conforming to `Encodable` and either `Identifiable` or `Hashable`.
+    ///
+    ///  - throws: `GarageError.missingConformance` if the type does not conform to either `Identifiable` or `Hashable`.
     public func parkAll<T: Encodable>(_ objects: [T]) throws {
         try context.performAndWait {
             try parkAllEncodables(objects)
@@ -153,15 +171,14 @@ extension Garage {
     
     /// Returns an instance of the specified type string and identifier string.
     /// Must be called from within context.performAndWait.
-    private func retrieveDecodable<T: Decodable>(typeName: String, identifier identifierString: String) throws -> T? {
-        guard let coreDataObject = fetchObject(for: typeName, identifier: identifierString) else { return nil }
+    private func retrieveDecodable<T: Decodable>(typeName: String, identifier: String) throws -> T? {
+        guard let coreDataObject = fetchObject(for: typeName, identifier: identifier) else { return nil }
         return try makeCodable(from: coreDataObject)
     }
     
     /// Returns an instance of the specified object type and identifier.
     /// Must be called from within context.performAndWait.
-    internal func retrieveDecodable<T: Decodable>(_ objectType: T.Type, identifier: LosslessStringConvertible) throws -> T? {
-        let identifier = String(identifier)
+    internal func retrieveDecodable<T: Decodable>(_ objectType: T.Type, identifier: String) throws -> T? {
         let typeName = String(describing: T.self)
         return try retrieveDecodable(typeName: typeName, identifier: identifier)
     }
@@ -169,12 +186,12 @@ extension Garage {
     /// Retrieves an object of the specified type conforming to `Decodable` with the specified identifier from the Garage.
     ///
     /// - parameter objectType: The type of the object to retrieve. This type must conform to `Codable`.
-    /// - parameter identifier: The identifier of the object to retrieve. This is the identifier previously specified by either that object's `Identifiable` `id` or `Hashable` `hashValue`.
+    /// - parameter identifier: The identifier of the object to retrieve. This must match the identifier used when parking the object (from `Identifiable.id` or `Hashable.hashValue`).
     ///
     /// - returns: An object conforming to the specified type, or nil if it was not found.
-    public func retrieve<T: Decodable>(_ objectType: T.Type, identifier: LosslessStringConvertible) throws -> T? {
+    public func retrieve<T: Decodable, ID>(_ objectType: T.Type, identifier: ID) throws -> T? {
         let typeName = String(describing: T.self)
-        let identifierString = String(identifier)
+        let identifierString = convertIdentifierToString(identifier)
         return try context.performAndWait {
             return try retrieveDecodable(typeName: typeName, identifier: identifierString)
         }
@@ -183,12 +200,12 @@ extension Garage {
     /// Retrieves an object of the specified type conforming to `Decodable` and ``Syncable`` with the specified identifier from the Garage.
     ///
     /// - parameter objectType: The type of the object to retrieve. This type must conform to `Codable` and ``Syncable``.
-    /// - parameter identifier: The identifier of the object to retrieve. This is the identifier previously specified by either that object's ``Mappable`` `id` or `Hashable` `hashValue`.
+    /// - parameter identifier: The identifier of the object to retrieve. This must match the identifier used when parking the object (from `Identifiable.id` or `Hashable.hashValue`).
     ///
     /// - returns: An object conforming to the specified type, or nil if it was not found.
-    public func retrieve<T: Decodable & Syncable>(_ objectType: T.Type, identifier: String) throws -> T? {
+    public func retrieve<T: Decodable & Syncable, ID>(_ objectType: T.Type, identifier: ID) throws -> T? {
         let typeName = String(describing: T.self)
-        let identifierString = String(identifier)
+        let identifierString = convertIdentifierToString(identifier)
         return try context.performAndWait {
             guard let coreDataObject = fetchObject(for: typeName, identifier: identifierString) else { return nil }
             return try makeSyncable(from: coreDataObject)
@@ -256,10 +273,10 @@ extension Garage {
         autosave()
     }
     
-    /// Sets the sync status for an array of objects of the same type `T` conforming to ``Mappable`` and ``Syncable``.
+    /// Sets the sync status for an array of objects of the same type `T` conforming to `Identifiable` or `Hashable`, and ``Syncable``.
     ///
     /// - parameter syncStatus: The ``SyncStatus`` of the objects
-    /// - parameter objects: An array of objects of the same type `T` conforming to ``Mappable`` and ``Syncable``.
+    /// - parameter objects: An array of objects of the same type `T` conforming to `Identifiable` or `Hashable`, and ``Syncable``.
     ///
     /// - throws: if there was a problem setting the sync status for an object. Note: Even if this throws, there still could be objects with their ``Syncable/syncStatus`` was set successfully. A false response simply indicates at least one failure.
     public func setSyncStatus<T: Syncable>(_ syncStatus: SyncStatus, for objects: [T]) throws {
@@ -275,16 +292,15 @@ extension Garage {
     }
     
     /// Returns the sync status for an object's underlying Core Data Object.
-    ///
     private func syncStatus<T>(for object: T, identifier: String) throws -> SyncStatus {
         let typeName = String(describing: T.self)
         let coreDataObject = try fetchCoreDataObject(for: typeName, identifier: identifier)
         return coreDataObject.syncStatus
     }
     
-    /// Returns the sync status for an object conforming to `Codable`, `Identifiable`, and ``Syncable``.
+    /// Returns the sync status for an object conforming to `Identifiable` or `Hashable`, and ``Syncable``.
     ///
-    /// - parameter object: An object conforming to `Codable`, `Identifiable`, and ``Syncable``.
+    /// - parameter object: An object conforming to `Identifiable` or `Hashable`, and ``Syncable``.
     ///
     /// - returns: The ``SyncStatus``.
     public func syncStatus<T: Syncable>(for object: T) throws -> SyncStatus {

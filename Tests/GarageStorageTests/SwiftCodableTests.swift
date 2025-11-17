@@ -49,10 +49,10 @@ struct SwiftCodableTests {
         
         // Retrieve each pet by identifier.
         let retrievedPet = try #require(try garage.retrieve(SwiftPet.self, identifier: 3))
-        #expect(retrievedPet.name == "Peaches", "expected Peaches to be Peaches")
+        #expect(retrievedPet.name == "Peaches", "expected Peaches")
 
         let retrievedPet2 = try #require(try garage.retrieve(SwiftPet.self, identifier: 5))
-        #expect(retrievedPet2.name == "Cream", "expected Cream to be Cream")
+        #expect(retrievedPet2.name == "Cream", "expected Cream")
         
         #expect(retrievedPet != retrievedPet2, "expected different pets")
         
@@ -60,6 +60,7 @@ struct SwiftCodableTests {
         #expect(retrievedPet == retrievedPet3, "expected separate fetches to return equivalent objects")
     }
 
+    
     @Test("Array of identifiable objects can be parked")
     func arrayOfIdentifiable() throws {
         let garage = makeTestGarage()
@@ -286,5 +287,4 @@ struct SwiftCodableTests {
         let retrievedSquirrels: [SwiftSquirrel] = try garage.retrieveAll(SwiftSquirrel.self)
         #expect(retrievedSquirrels.count == squirrelCount)
     }
-
 }

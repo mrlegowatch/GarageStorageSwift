@@ -181,4 +181,28 @@ struct SwiftErrorTests {
             Issue.record("Expected DecodingError.dataCorrupted, got: \(error)")
         }
     }
+    
+    @Test("Missing conformance for Identifiable or Hashable")
+    func missingConformance() throws {
+        let garage = makeTestGarage()
+
+        let plainCodable = SwiftPlainCodable()
+        do {
+            _ = try garage.park(plainCodable)
+            Issue.record("Expected park to throw GarageError.missingConformance")
+        } catch GarageError.missingConformance(let identifiable) {
+            #expect("\(identifiable)" == "SwiftPlainCodable")
+        } catch {
+            Issue.record("Expected park to throw GarageError.missingConformance, got: \(error)")
+        }
+        
+        do {
+            _ = try garage.delete(plainCodable)
+            Issue.record("Expected delete to throw GarageError.missingConformance")
+        } catch GarageError.missingConformance(let identifiable) {
+            #expect("\(identifiable)" == "SwiftPlainCodable")
+        } catch {
+            Issue.record("Expected delete to throw GarageError.missingConformance, got: \(error)")
+        }
+    }
 }
