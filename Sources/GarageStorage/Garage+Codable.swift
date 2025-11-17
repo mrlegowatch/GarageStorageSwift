@@ -42,7 +42,7 @@ extension Garage {
     /// Extracts an identifier string representation from an Identifiable ID.
     /// Only supports String, UUID, and LosslessStringConvertible ID types.
     /// - Throws: `GarageError.missingConformance` if the ID type is not supported.
-    private func extractIdentifierString(from identifiable: any Identifiable) throws -> String {
+    internal func extractIdentifierString(from identifiable: any Identifiable) throws -> String {
         let id = identifiable.id
         
         // Supported conversions for ID.
