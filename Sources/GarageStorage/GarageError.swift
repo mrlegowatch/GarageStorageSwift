@@ -19,7 +19,7 @@ extension Garage {
 /// Errors that may be thrown from GarageStorage.
 ///
 /// Errors conform to NSError, and have the "GarageStorage" error domain and localized descriptions.
-public enum GarageError: Error, CustomNSError {
+public enum GarageError: Error, CustomNSError, Equatable {
     
     /// This error is thrown when an internal _retrieve_ call is not expected to fail, such as when deleting an object already deleted, or not yet parked.
     /// No error is thrown when one of the public `retrieve` calls are made; in those cases, a nil object or empty array are returned.
@@ -28,6 +28,12 @@ public enum GarageError: Error, CustomNSError {
     /// This error is thrown when a Core Data Object is missing its storage data.
     /// The conditions for throwing this error are extremely rare, such as memory corruption while parking an object.
     case storageDataIsNil(String)
+    
+    /// This error is thrown when using `park`, `retrieve`, or `delete` on an object that doesn't conform to `Identifiable` or `Hashable`.
+    case missingConformance(String)
+    
+    /// This error is thrown when using `park`, `retrieve`, or `delete` on an object that conforms to `Identifiable` but whose ID type doesn't conform to `String`, `UUID`, or  `LosslessStringConvertible`.
+    case unsupportedIDConformance(String)
     
     // MARK: CustomNSError conformance
     
@@ -43,7 +49,15 @@ public enum GarageError: Error, CustomNSError {
             
         case .storageDataIsNil(let typeName):
             userInfo[NSLocalizedDescriptionKey] = "CoreDataObject.gsData is nil for type: \(typeName)"
+            
+        case .missingConformance(let typeName):
+            userInfo[NSLocalizedDescriptionKey] = "Missing Identifiable or Hashable conformance for type: \(typeName)"
+          
+        case .unsupportedIDConformance(let typeName):
+            userInfo[NSLocalizedDescriptionKey] = "Identifiable ID type '\(typeName)' must be String, UUID, or LosslessStringConvertible"
         }
+        
+        
         return userInfo
     }
 }
@@ -51,6 +65,7 @@ public enum GarageError: Error, CustomNSError {
 extension Decoder {
     
     /// Returns a `DecodingError.dataCorrupted` with a debug description that refers to a missing `Identifiable` reference.
+    /// We use this instead of a GarageError enum in order to capture the codingPath from the decoder, so that we have a better idea where it came from.
     func missingIdentifiableReference(typeName: String = "unknown", identifier: String = "missing") -> Error {
         let description = "Missing Identifiable reference of type: \(typeName) with id: \(identifier)"
         let context = DecodingError.Context(codingPath: self.codingPath, debugDescription: description)

@@ -84,6 +84,53 @@ struct SwiftErrorTests {
         #expect(nsError.localizedDescription.contains("gsData is nil"))
     }
     
+    // MARK: - missingConformance Tests
+    
+    @Test("missingConformance error has correct userInfo")
+    func missingConformanceUserInfo() {
+        let error = GarageError.missingConformance("SwiftPerson")
+        
+        let userInfo = error.errorUserInfo
+        let description = userInfo[NSLocalizedDescriptionKey] as? String
+        
+        #expect(description != nil)
+        #expect(description?.contains("SwiftPerson") == true)
+        #expect(description?.contains("conformance") == true)
+        #expect(description == "Missing Identifiable or Hashable conformance for type: SwiftPerson")
+    }
+    
+    @Test("missingConformance error has localized description")
+    func missingConformanceNSError() {
+        let error = GarageError.missingConformance("SwiftPerson")
+        let nsError = error as NSError
+        
+        #expect(nsError.localizedDescription.contains("SwiftPerson"))
+        #expect(nsError.localizedDescription.contains("conformance"))
+    }
+
+    // MARK: - missingConformance Tests
+    
+    @Test("unsupportedIDConformance error has correct userInfo")
+    func unsupportedIDConformanceUserInfo() {
+        let error = GarageError.unsupportedIDConformance("OrderID")
+        
+        let userInfo = error.errorUserInfo
+        let description = userInfo[NSLocalizedDescriptionKey] as? String
+        
+        #expect(description != nil)
+        #expect(description?.contains("OrderID") == true)
+        #expect(description == "Identifiable ID type 'OrderID' must be String, UUID, or LosslessStringConvertible")
+    }
+    
+    @Test("missingConformance error has localized description")
+    func unsupportedIDConformanceNSError() {
+        let error = GarageError.unsupportedIDConformance("OrderID")
+        let nsError = error as NSError
+        
+        #expect(nsError.localizedDescription.contains("OrderID"))
+        #expect(nsError.localizedDescription.contains("Identifiable ID type"))
+    }
+
     // MARK: - Real-world Error Scenario Tests
     
     @Test("storageDataIsNil from retrieve")
@@ -179,6 +226,30 @@ struct SwiftErrorTests {
             #expect(context.debugDescription.contains("Nick"))
         } catch {
             Issue.record("Expected DecodingError.dataCorrupted, got: \(error)")
+        }
+    }
+    
+    @Test("Missing conformance for Identifiable or Hashable")
+    func missingConformance() throws {
+        let garage = makeTestGarage()
+
+        let plainCodable = SwiftPlainCodable()
+        do {
+            _ = try garage.park(plainCodable)
+            Issue.record("Expected park to throw GarageError.missingConformance")
+        } catch GarageError.missingConformance(let identifiable) {
+            #expect("\(identifiable)" == "SwiftPlainCodable")
+        } catch {
+            Issue.record("Expected park to throw GarageError.missingConformance, got: \(error)")
+        }
+        
+        do {
+            _ = try garage.delete(plainCodable)
+            Issue.record("Expected delete to throw GarageError.missingConformance")
+        } catch GarageError.missingConformance(let identifiable) {
+            #expect("\(identifiable)" == "SwiftPlainCodable")
+        } catch {
+            Issue.record("Expected delete to throw GarageError.missingConformance, got: \(error)")
         }
     }
 }

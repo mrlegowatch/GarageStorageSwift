@@ -142,10 +142,16 @@ struct TestableEdgeCaseTests {
             try unencryptedGarage.park(sam)
 
             let className = String(describing: type(of: sam))
-            let coreDataObject = garage.fetchObject(for: className, identifier: "Sam")
             
-            let unencryptedCoreDataObject = unencryptedGarage.fetchObject(for: className, identifier: "Sam")
+            nonisolated(unsafe) let garageRef = garage
+            nonisolated(unsafe) let unencryptedGarageRef = unencryptedGarage
             
+            let coreDataObject = garage.context.performAndWait {
+                return garageRef.fetchObject(for: className, identifier: "Sam")
+            }
+            let unencryptedCoreDataObject = unencryptedGarage.context.performAndWait {
+                return unencryptedGarageRef.fetchObject(for: className, identifier: "Sam")
+            }
             guard let encryptedString = coreDataObject?.gs_data,
                 let unencryptedString = unencryptedCoreDataObject?.gs_data else {
                     Issue.record("Failed to encode data, bailing test")
