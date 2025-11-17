@@ -37,7 +37,7 @@ public class Garage: NSObject {
     ///
     /// Use ``withAutosaveDisabled(_:)`` to set this to false, in order to perform batch changes to many objects before saving them all, optimizing performance.
     @objc(autosaveEnabled)
-    public private(set) var isAutosaveEnabled = true
+    public var isAutosaveEnabled = true
     
     /// The date decoding strategy used by JSONDecoder when decoding objects.
     ///
