@@ -19,7 +19,7 @@ extension Garage {
 /// Errors that may be thrown from GarageStorage.
 ///
 /// Errors conform to NSError, and have the "GarageStorage" error domain and localized descriptions.
-public enum GarageError: Error, CustomNSError {
+public enum GarageError: Error, CustomNSError, Equatable {
     
     /// This error is thrown when an internal _retrieve_ call is not expected to fail, such as when deleting an object already deleted, or not yet parked.
     /// No error is thrown when one of the public `retrieve` calls are made; in those cases, a nil object or empty array are returned.
@@ -31,6 +31,9 @@ public enum GarageError: Error, CustomNSError {
     
     /// This error is thrown when using `park`, `retrieve`, or `delete` on an object that doesn't conform to `Identifiable` or `Hashable`.
     case missingConformance(String)
+    
+    /// This error is thrown when using `park`, `retrieve`, or `delete` on an object that conforms to `Identifiable` but whose ID type doesn't conform to `String`, `UUID`, or  `LosslessStringConvertible`.
+    case unsupportedIDConformance(String)
     
     // MARK: CustomNSError conformance
     
@@ -46,9 +49,12 @@ public enum GarageError: Error, CustomNSError {
             
         case .storageDataIsNil(let typeName):
             userInfo[NSLocalizedDescriptionKey] = "CoreDataObject.gsData is nil for type: \(typeName)"
-
+            
         case .missingConformance(let typeName):
             userInfo[NSLocalizedDescriptionKey] = "Missing Identifiable or Hashable conformance for type: \(typeName)"
+          
+        case .unsupportedIDConformance(let typeName):
+            userInfo[NSLocalizedDescriptionKey] = "Identifiable ID type '\(typeName)' must be String, UUID, or LosslessStringConvertible"
         }
         
         

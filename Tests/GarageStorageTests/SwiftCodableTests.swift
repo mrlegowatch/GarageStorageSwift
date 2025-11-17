@@ -287,4 +287,76 @@ struct SwiftCodableTests {
         let retrievedSquirrels: [SwiftSquirrel] = try garage.retrieveAll(SwiftSquirrel.self)
         #expect(retrievedSquirrels.count == squirrelCount)
     }
+    
+    @Test("Identifiable with UUID identifier can be parked and retrieved")
+    func identifiableWithUUID() throws {
+        let garage = makeTestGarage()
+        
+        // Create a product with UUID identifier
+        let product = SwiftProduct(name: "MacBook Pro", price: 1999.99)
+        let productId = product.id
+        
+        // Park the product
+        try garage.park(product)
+        
+        // Retrieve the product by UUID
+        let retrievedProduct = try #require(try garage.retrieve(SwiftProduct.self, identifier: productId))
+        #expect(retrievedProduct.name == "MacBook Pro", "Expected product name to match")
+        
+        // Park another product
+        let product2 = SwiftProduct(name: "iPhone", price: 999.99)
+        try garage.park(product2)
+        
+        // Verify we can retrieve both products
+        let allProducts = try garage.retrieveAll(SwiftProduct.self)
+        #expect(allProducts.count == 2, "Expected 2 products")
+        
+        // Delete the first product
+        try garage.delete(product)
+        
+        // Verify deletion
+        let deletedProduct = try? garage.retrieve(SwiftProduct.self, identifier: productId)
+        #expect(deletedProduct == nil, "Product should be deleted")
+        
+        // Verify second product still exists
+        let remainingProducts = try garage.retrieveAll(SwiftProduct.self)
+        #expect(remainingProducts.count == 1, "Expected 1 product remaining")
+        #expect(remainingProducts[0].name == "iPhone", "Expected iPhone to remain")
+    }
+    
+    @Test("Identifiable with custom non-convertible ID type throws error")
+    func identifiableWithCustomID() throws {
+        let garage = makeTestGarage()
+        
+        // Create orders with custom OrderID
+        let order1 = SwiftOrder(
+            orderNumber: "ORD-2024-001",
+            totalAmount: 299.99,
+            items: ["Widget", "Gadget"]
+        )
+        
+        let order2 = SwiftOrder(
+            orderNumber: "ORD-2024-002",
+            totalAmount: 549.50,
+            items: ["Device", "Accessory", "Cable"]
+        )
+        
+        // Parking should throw an error because OrderID is not a supported type
+        #expect(throws: GarageError.unsupportedIDConformance("OrderID")) {
+            try garage.park(order1)
+        }
+        
+        #expect(throws: GarageError.unsupportedIDConformance("OrderID")) {
+            try garage.parkAll([order1, order2])
+        }
+        
+        // Verify nothing was parked
+        let allOrders = try garage.retrieveAll(SwiftOrder.self)
+        #expect(allOrders.count == 0, "Expected 0 orders since parking should have failed")
+        
+        let checkOrderID = order1.id
+        #expect(throws: GarageError.unsupportedIDConformance("OrderID")) {
+            try garage.retrieve(SwiftOrder.self, identifier: checkOrderID)
+        }
+    }
 }
