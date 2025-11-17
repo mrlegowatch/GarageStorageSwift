@@ -350,8 +350,7 @@ extension Garage {
 
     // MARK: Deleting
     
-    /// Deletes an object from the Garage by preferring Identifiable identity over Hashable when both apply.
-    /// The public API is unconstrained to avoid overload ambiguity; identity selection is resolved at runtime.
+    /// Deletes an object conforming to `Decodable` and either `Identifiable` or `Hashable` from the Garage.
     ///
     /// - parameter object: An object conforming to `Decodable` and either `Identifiable` or `Hashable`.
     ///
