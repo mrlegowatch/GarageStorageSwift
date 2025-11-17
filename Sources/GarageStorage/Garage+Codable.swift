@@ -145,7 +145,7 @@ extension Garage {
         }
     }
     
-    /// Adds an array of objects to the Garage conforming to `Encodable` and either `Identifiable` or `Hashable` to the Garage.
+    /// Adds an array of objects conforming to `Encodable` and either `Identifiable` or `Hashable` to the Garage.
     ///
     ///  - parameter objects: An array of objects conforming to `Encodable` and either `Identifiable` or `Hashable`.
     ///
