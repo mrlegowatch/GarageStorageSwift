@@ -271,4 +271,20 @@ struct SwiftCodableTests {
         let allAddresses = try garage.retrieveAll(SwiftAddress.self)
         #expect(allAddresses.count == 0, "All addresses should be deleted")
     }
+    
+    @Test("Identifiable and Hashable park and retrieve")
+    func identifiableAndHashable() throws {
+        let garage = makeTestGarage()
+        
+        let squirrels = swiftSquirrels()
+        let squirrelCount = squirrels.count
+        
+        // Park the objects twice, they should only be saved once.
+        try garage.parkAll(squirrels)
+        try garage.parkAll(squirrels)
+
+        let retrievedSquirrels: [SwiftSquirrel] = try garage.retrieveAll(SwiftSquirrel.self)
+        #expect(retrievedSquirrels.count == squirrelCount)
+    }
+
 }

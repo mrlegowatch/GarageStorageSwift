@@ -60,6 +60,12 @@ func swiftPet2() -> SwiftPet {
     return pet
 }
 
+func swiftSquirrels() -> [SwiftSquirrel] {
+    let squirrel1 = SwiftSquirrel(name: "Nutty")
+    let squirrel2 = SwiftSquirrel(name: "Benny")
+    return [squirrel1, squirrel2]
+}
+
 func swiftPersonWithParent() -> SwiftPersonWithParent {
     let person = SwiftPersonWithParent()
     person.name = "Child"
