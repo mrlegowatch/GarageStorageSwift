@@ -17,6 +17,7 @@ import Foundation
 ///  - Core types: `Int`, `Double`, `Bool`, `String`, `Date`
 ///  - Container types: `Array`, `Dictionary`
 ///  - Other ``MappableObject`` classes
+///  - note: This protocol is only required for Objective-C compatibility. For Swift projects, use `Codable`, and for top-level objects use `Hashable` or `Identifiable`.
 @objc(GSObjectMapping)
 public class ObjectMapping: NSObject {
     

@@ -6,12 +6,11 @@
 //  Copyright © 2019 Wellframe. All rights reserved.
 //
 
-import Foundation
-import GarageStorage
+import Foundation // For Date
+import GarageStorage // For Syncable
 
-// In order to be a top-level type that is parked and retrieved in a garage, a type must conform to Mappable (a Codable with an identifier). This happens to be a reference type (class).
-// It may optionally implement Syncable.
-class SwiftPerson: Mappable, Syncable {
+// In order to be a top-level type that is parked and retrieved in a garage, a type must conform to Codable and Identifiable. This happens to be a reference type (class).
+class SwiftPerson: Codable, Identifiable, Syncable {
 
     // Map the identifier to a preferred property, if desired.
     var id: String { name }
@@ -42,7 +41,3 @@ class SwiftPerson: Mappable, Syncable {
     // Syncable protocol
     var syncStatus: SyncStatus = .undetermined
 }
-
-// Note that SwiftyPerson can conform to Swift Identifiable, because Mappable is compatible with Identifiable where ID == String.
-// This is here for shizzles, it's not actually needed or used by anything in the tests.
-extension SwiftPerson: Identifiable { }

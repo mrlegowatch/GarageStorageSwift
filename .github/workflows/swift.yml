@@ -1,23 +1,70 @@
+# Swift build & test with coverage (robust, discovers test bundle, caches build)
 name: Swift
 
 on:
   push:
-    branches:
-    - develop
-    - main
+    branches: [ "development", "main" ]
   pull_request:
-    branches:
-    - develop
-    - main
+    branches: [ "development", "main" ]
 
 jobs:
   build:
-
     runs-on: macos-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: swift build -v
-    - name: Run tests
-      run: swift test -v
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up cache for SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build
+            .swiftpm
+            Packages
+          key: ${{ runner.os }}-swiftpm-${{ hashFiles('**/Package.swift') }}
+
+      - name: Build
+        run: swift build -v
+
+      - name: Run tests (with coverage)
+        run: swift test --enable-code-coverage
+
+      - name: Generate coverage report (discover test bundle)
+        run: |
+          set -euo pipefail
+          # Find the first .xctest produced by SwiftPM; fail with a clear message if not found
+          TEST_BUNDLE=$(find .build -name "*.xctest" | head -n 1 || true)
+          if [ -z "$TEST_BUNDLE" ]; then
+            echo "ERROR: No .xctest bundle found in .build. Did tests run and produce coverage data?"
+            echo "Contents of .build:"
+            ls -la .build || true
+            exit 1
+          fi
+          echo "Found test bundle: $TEST_BUNDLE"
+          # Find the executable(s) inside the .xctest and use llvm-cov export with the profdata produced by swift test
+          EXECUTABLE_PATH=$(find "$TEST_BUNDLE/Contents/MacOS" -type f -maxdepth 1 | head -n 1)
+          if [ -z "$EXECUTABLE_PATH" ]; then
+            echo "ERROR: No executable found inside $TEST_BUNDLE/Contents/MacOS"
+            exit 1
+          fi
+          echo "Using executable: $EXECUTABLE_PATH"
+          # Use default profdata path produced by SwiftPM. Adjust if your project writes profdata elsewhere.
+          PROFDATA=".build/debug/codecov/default.profdata"
+          if [ ! -f "$PROFDATA" ]; then
+            echo "ERROR: Profiling data not found at $PROFDATA"
+            ls -la .build/debug || true
+            exit 1
+          fi
+          xcrun llvm-cov export -format="lcov" "$EXECUTABLE_PATH" -instr-profile "$PROFDATA" > coverage.lcov
+          echo "Generated coverage.lcov (size: $(wc -c coverage.lcov))"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.lcov
+          verbose: true
+          fail_ci_if_error: true
+        env:
+          # If your repo is private, set CODECOV_TOKEN in repository secrets.
+          # For public repos, Codecov accepts uploads without a token in many cases.
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

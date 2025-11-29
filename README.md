@@ -1,4 +1,8 @@
-# GarageStorage
+# GarageStorage ![Build Status](https://github.com/mrlegowatch/GarageStorageSwift/workflows/Swift/badge.svg)
+![Code Coverage](https://codecov.io/gh/mrlegowatch/GarageStorageSwift/branch/development/graph/badge.svg)
+![Swift Version](https://img.shields.io/badge/Swift-5.9-orange.svg)
+![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS-lightgrey.svg)
+[![License](https://img.shields.io/github/license/mrlegowatch/GarageStorageSwift)](LICENSE)
 
 ## Overview
 GarageStorage is designed to do two things:

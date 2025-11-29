@@ -8,11 +8,9 @@
 
 import Foundation
 
-/// A protocol requiring `Codable` conformance that also requires a string `id`, for when you need to uniquely identify a top-level instance in storage.
+/// An optional, convenience protocol that conforms to `Codable` and `Identifiable` where `ID` conforms to `LosslessStringConvertible`.
+/// These two protocol conformances are required for parking and retrieving uniquely identified objects in a Garage.
 ///
-/// This protocol is compatible with `Identifiable` where `ID == String`.
-public protocol Mappable: Codable /*, Identifiable where ID == String */ {
-
-    /// A unique identifier.
-    var id: String { get }
-}
+/// - note: Most clients can simply conform to `Codable` and `Identifiable` directly, to meet these requirements.
+/// This protocol is only required for backward compatibility with existing code already using `Mappable`.
+public protocol Mappable: Codable, Identifiable where ID: LosslessStringConvertible { }

@@ -6,15 +6,14 @@
 //  Copyright © 2024 Wellframe. All rights reserved.
 //
 
-import Foundation
-import GarageStorage
+import GarageStorage // for Mappable, Syncable
 
 // In order to be a top-level type that is parked and retrieved in a garage, a type must conform to Mappable (a Codable with an identifier). This happens to be a reference type (class).
 // It may optionally implement Syncable.
 class SwiftPet: Mappable, Syncable {
 
-    // Map the identifier to a preferred property, if desired.
-    var id: String { name }
+    // This declaration helps validate that non-String ID types such as `Int` conform to `LosslessStringConvertible` and pass a round-trip.
+    var id: Int { age }
     
     // This example sets all properties to default values, so that an init() method is not required.
     var name: String = ""
@@ -30,4 +29,10 @@ class SwiftPet: Mappable, Syncable {
     
     // Syncable protocol
     var syncStatus: SyncStatus = .notSynced
+}
+
+extension SwiftPet: Equatable {
+    static func == (lhs: SwiftPet, rhs: SwiftPet) -> Bool {
+        return lhs.id == rhs.id
+    }
 }

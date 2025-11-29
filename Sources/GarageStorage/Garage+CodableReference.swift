@@ -8,89 +8,109 @@
 
 import Foundation
 
-// This file contains extensions for encoding and decoding nested
-// Mappable objects by reference.
-//
-// The Swift runtime needs to provide a nudge for whether about-to-be-saved
-// reference is an explicitly-parked object (a `Mappable` with an `id`),
-// so the Garage is stored and accessed via the super encoder or decoder to
-// ensure that they are parked appropriately. Without this, the references
-// would fail to be retrieved.
-
-extension Encoder {
-    
-    var garage: Garage? { self.userInfo[Garage.userInfoKey] as? Garage }
-}
-
-
-/// These encoding extensions are exposed to the Swift runtime, to ensure that references to any embedded `Mappable` objects are correctly parked at the top level of the Garage.
+/// These encoding extensions are exposed to the Swift runtime, to ensure that references to any embedded `Identifiable` objects are correctly parked at the top level of the Garage.
+/// Supports `Identifiable` where `ID` is `String`, `UUID`, or `LosslessStringConvertible`.
 public extension KeyedEncodingContainer {
     
-    /// Wraps the default `encode` implementation so that we can call it from our Mappable version.
+    /// Wraps the default `encode` implementation so that we can call it from our Identifiable version.
     private mutating func encodeDefault<T: Encodable>(_ codable: T, forKey key: KeyedEncodingContainer<K>.Key) throws {
         try encode(codable, forKey: key)
     }
     
-    /// Encodes a nested `Mappable` object as a reference.
-    mutating func encode<T: Mappable>(_ mappable: T, forKey key: KeyedEncodingContainer<K>.Key) throws {
+    /// Encodes a nested `Identifiable` object as a reference.
+    /// Supports `Identifiable` where `ID` is `String`, `UUID`, or `LosslessStringConvertible`.
+    mutating func encode<T: Encodable & Identifiable>(_ identifiable: T, forKey key: KeyedEncodingContainer<K>.Key) throws {
         // If this encoder does not have a garage, encode as Codable does.
         let encoder = superEncoder()
         guard let garage = encoder.garage else {
-            try encodeDefault(mappable, forKey: key)
+            try encodeDefault(identifiable, forKey: key)
             return
         }
         
         // Park the object and encode it as a reference
-        try garage.park(mappable)
-        let reference = mappable.id
+        let reference = try garage.extractIdentifierString(from: identifiable)
+        try garage.parkEncodable(from: identifiable, identifier: reference)
         try encode(reference, forKey: key)
     }
 
-    /// Encodes a nested `Mappable` object as a reference, if present.
-    mutating func encodeIfPresent<T: Mappable>(_ mappable: T?, forKey key: KeyedEncodingContainer<K>.Key) throws {
-        guard let mappable = mappable else { return }
-        try encode(mappable, forKey: key)
+    /// Encodes a nested `Identifiable` object as a reference, if present.
+    /// Supports `Identifiable` where `ID` is `String`, `UUID`, or `LosslessStringConvertible`.
+    mutating func encodeIfPresent<T: Encodable & Identifiable>(_ identifiable: T?, forKey key: KeyedEncodingContainer<K>.Key) throws {
+        guard let identifiable = identifiable else { return }
+        try encode(identifiable, forKey: key)
     }
     
-    /// Encodes a nested array of `Mappable` objects as references.
-    mutating func encode<T: Mappable>(_ mappables: [T], forKey key: KeyedEncodingContainer<K>.Key) throws {
-        guard mappables.count > 0 else { return }
+    /// Encodes a nested array of `Identifiable` objects as references.
+    /// Supports `Identifiable` where `ID` is `String`, `UUID`, or `LosslessStringConvertible`.
+    mutating func encode<T: Encodable & Identifiable>(_ identifiables: [T], forKey key: KeyedEncodingContainer<K>.Key) throws {
+        guard identifiables.count > 0 else { return }
         // If this encoder does not have a garage, encode as Codable does.
         let encoder = superEncoder()
         guard let garage = encoder.garage else {
-            try encodeDefault(mappables, forKey: key)
+            try encodeDefault(identifiables, forKey: key)
             return
         }
         
         // Park the objects and encode them as references
-        try garage.parkAll(mappables)
-        let references = mappables.map { $0.id }
+        try garage.parkAllEncodables(identifiables)
+        let references = try identifiables.map { try garage.extractIdentifierString(from: $0) }
         try encode(references, forKey: key)
     }
 }
 
-extension Decoder {
-    
-    /// The underlying Garage used by this Decoder, if specified.
-    var garage: Garage? { self.userInfo[Garage.userInfoKey] as? Garage }
-
-    /// Returns a `DecodingError` of type `dataCorrupted`.
-    func makeDecodingError(_ description: String) -> DecodingError {
-        let context = DecodingError.Context(codingPath: self.codingPath, debugDescription: description)
-        return DecodingError.dataCorrupted(context)
-    }
-}
-
-/// These decoding extensions are exposed to the Swift runtime, to ensure that references to any embedded `Mappable` objects are correctly retrieved from the top level of the Garage.
+/// These public decoding extensions are exposed to the Swift runtime, to ensure that references to any embedded `Identifiable` objects are correctly retrieved from the top level of the Garage.
+/// Supports `Identifiable` where `ID` is `String`, `UUID`, or `LosslessStringConvertible`.
 public extension KeyedDecodingContainer {
+
+    private func decodeReferenceIfPresent(forKey key: KeyedDecodingContainer<K>.Key) -> String? {
+        let reference: String?
+        
+        // Swift Codable encodes the identifier directly
+        // Objective-C MappableObject encodes a dictionary of identifier and non-anonymous type
+        if let identifier = try? decodeIfPresent(String.self, forKey: key) {
+            reference = identifier
+        } else if let referenceObject = try? decodeIfPresent(__ReferenceObjC.self, forKey: key) {
+            reference = referenceObject.id
+        } else {
+            reference = nil
+        }
+        
+        return reference
+    }
+
+    private func decodeReference(forKey key: KeyedDecodingContainer<K>.Key) throws -> String {
+        guard let reference = decodeReferenceIfPresent(forKey: key) else {
+            let decoder = try superDecoder()
+            throw decoder.missingIdentifiableReference()
+        }
+        
+        return reference
+    }
     
-    /// Wraps the default `decode` implementation so that we can call it from our Mappable version.
+    private func decodeReferencesIfPresent(forKey key: KeyedDecodingContainer<K>.Key) throws -> [String] {
+        let references: [String]
+        
+        // Swift Codable encodes the array of identifiers directly
+        // Objective-C MappableObjects encode an array of dictionaries of identifier and type
+        if let identifiers = try? decodeIfPresent([String].self, forKey: key) {
+            references = identifiers
+        } else if let dictionaries = try? decodeIfPresent([[String:String]].self, forKey: key) {
+            references = dictionaries.map { $0[CoreDataObject.Attribute.identifier]! }
+        } else {
+            references = []
+        }
+        
+        return references
+    }
+    
+    /// Wraps the default `decode` implementation so that we can call it from our Identifiable version.
     private func decodeDefault<T: Decodable>(_ codable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T {
         return try decode(T.self, forKey: key)
     }
 
-    /// Decodes a reference to a nested Mappable object.
-    func decode<T: Mappable>(_ mappable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T {
+    /// Decodes a reference to a nested `Identifiable` object.
+    /// Supports `Identifiable` where `ID` is `String`, `UUID`, or `LosslessStringConvertible`.
+    func decode<T: Decodable & Identifiable>(_ identifiable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T {
         // If this decoder does not have a garage, decode as Codable does.
         let decoder = try superDecoder()
         guard let garage = decoder.garage else {
@@ -98,33 +118,35 @@ public extension KeyedDecodingContainer {
         }
         
         let reference = try decodeReference(forKey: key)
-        guard let object = try garage.retrieve(T.self, identifier: reference) else {
-            throw decoder.makeDecodingError("Missing reference: \(reference) of type: \(T.self)")
+        guard let object = try garage.retrieveDecodable(T.self, identifier: reference) else {
+            throw decoder.missingIdentifiableReference(typeName: "\(T.self)", identifier: reference)
         }
         return object
     }
     
-    /// Wraps the default `decodeIfPresent` implementation so that we can call it from our Mappable version.
+    /// Wraps the default `decodeIfPresent` implementation so that we can call it from our Identifiable version.
     private func decodeIfPresentDefault<T: Decodable>(_ codable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T? {
         return try decodeIfPresent(T.self, forKey: key)
     }
     
-    /// Decodes a reference to a nested `Mappable` object, if present.
-    func decodeIfPresent<T: Mappable>(_ mappable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T? {
+    /// Decodes a reference to a nested `Identifiable` object, if present.
+    /// Supports `Identifiable` where `ID` is `String`, `UUID`, or `LosslessStringConvertible`.
+    func decodeIfPresent<T: Decodable & Identifiable>(_ identifiable: T.Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> T? {
         // If this decoder does not have a garage, decode as Codable does.
         let decoder = try superDecoder()
         guard let garage = decoder.garage else {
             return try decodeIfPresentDefault(T.self, forKey: key)
         }
         
-        guard let reference = try decodeReferenceIfPresent(forKey: key) else {
+        guard let reference = decodeReferenceIfPresent(forKey: key) else {
             return nil
         }
-        return try garage.retrieve(T.self, identifier: reference)
+        return try garage.retrieveDecodable(T.self, identifier: reference)
     }
-    
-    /// Decodes an array of references to nested `Mappable` objects.
-    func decode<T: Mappable>(_ mappable: [T].Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> [T] {
+        
+    /// Decodes an array of references to nested `Identifiable` objects.
+    /// Supports `Identifiable` where `ID` is `String`, `UUID`, or `LosslessStringConvertible`.
+    func decode<T: Decodable & Identifiable>(_ identifiable: [T].Type, forKey key: KeyedDecodingContainer<K>.Key) throws -> [T] {
         // If this decoder does not have a garage, decode as Codable does.
         let decoder = try superDecoder()
         guard let garage = decoder.garage else {
@@ -135,8 +157,8 @@ public extension KeyedDecodingContainer {
         
         var objects: [T] = []
         for reference in references {
-            guard let object = try garage.retrieve(T.self, identifier: reference) else {
-                throw Garage.makeError("Missing reference: \(reference) of type: \(T.self)")
+            guard let object = try garage.retrieveDecodable(T.self, identifier: reference) else {
+                throw decoder.missingIdentifiableReference(identifier: reference)
             }
             objects.append(object)
         }
