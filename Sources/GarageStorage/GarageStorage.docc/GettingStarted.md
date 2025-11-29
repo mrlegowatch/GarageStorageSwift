@@ -61,7 +61,7 @@ If many references of this type with the same value are being embedded (e.g., mu
 
 As indicated in the previous section, a top-level object or elements of a top-level array need only conform to `Hashable`. They may be either value or reference types.
 
-Standalone top-level objects—that is, root objects that are parked directly using `park()`—often require being uniquely identified in the Garage, and are often reference types, such as classes. This is supported through the `Identifiable` protocol. The only requirement for `Identifiable` is that its ID conform to `LosslessStringConvertible`. For example:
+Standalone top-level objects—that is, root objects that are parked directly using `park()`—often require being uniquely identified in the Garage, and are often reference types, such as classes. This is supported through the `Identifiable` protocol. The only requirement for `Identifiable` is that its ID conform to `String`, `UUID`, or `LosslessStringConvertible`. For example:
 
 ```swift
 class Person: Codable, Identifiable {
@@ -79,20 +79,6 @@ class Person: Codable, Identifiable {
 ```
 
 Note that in the above example, another property, `name`, is mapped to the `id` property, and the `id` property itself is synthesized (i.e., not stored directly with the object). In general, this is how you might map an existing unique identifier of any type (such as from a server or remote storage), to the one required for the Garage.
-
-Note: Many Swift types support the `LosslessStringConvertible` protocol requirement for `Identifiable`'s `ID`, including `String` (of course), `Int`, `Double`, etc. However, `UUID` does not support this directly. To add conformance for `UUID`, implement the following in your project:
-
-```swift
-import Foundation
-
-extension UUID: LosslessStringConvertible {
-    public init?(_ description: String) {
-        self.init(uuidString: description)
-    }
-
-    public var description: String { self.uuidString }
-}
-```
 
 ### Parking Objects
 Parking an object puts a snapshot of that object into the Garage. As mentioned earlier, this is different from pure Core Data, where changes to your `NSManagedObjects` are directly reflected in the managed object context. With GarageStorage, since you're parking a snapshot, *you will need to park that object any time you want changes you've made to it to be reflected/persisted.* You can park the same object multiple times, which will update the existing object of that same type and identifier. To park an `Identifiable` object in the garage, call:
